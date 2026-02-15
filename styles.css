@@ -322,6 +322,13 @@ html.program-mode .monitor-label {
     object-fit: contain;
 }
 
+/* Circular crop for dome output */
+.monitor-frame.program canvas {
+    border-radius: 50%;
+    clip-path: circle(50%);
+    border: 2px solid rgba(138, 43, 226, 0.3);
+}
+
 /* Script Panel */
 .script-panel {
     background: rgba(255, 255, 255, 0.02);

@@ -1352,11 +1352,13 @@ class Planetarium {
             this.sun.material.uniforms.time.value = t;
         }
 
-        // 1. Render for Dome (Fisheye Program)
-        this.cubeCamera.update(this.renderer, this.scene);
-        this.composer.render();
+        // Both monitors now show the same perspective view
+        // Program output has a circular CSS mask applied
 
-        // 2. Render for Director Menu (Preview Monitor)
+        // 1. Render Program Output (with circular crop via CSS)
+        this.renderer.render(this.scene, this.previewCamera);
+
+        // 2. Render Preview Monitor (Director's view)
         this.previewRenderer.render(this.scene, this.previewCamera);
 
         // 3. Audio Meter Update (Director Only)
