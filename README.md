@@ -39,5 +39,5 @@ A high-fidelity, shader-driven 3D planetarium experience built with Three.js. Th
 This application is designed with a **180° Fisheye Constraint**. The rendering is oriented "Upward" relative to the horizon, making it a drop-in solution for digital dome planetariums.
 
 ---
-*Created for the Sirindhorn Planetarium Experience.*
+*Created for the Sirindhorn Planetarium.*
 >>>>>>> 56fc17a (Total Movie-Grade Overhaul: Procedural shaders, volumetric sun, cinematic camera jitter, and IMAX post-processing)
