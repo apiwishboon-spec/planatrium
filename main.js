@@ -32,7 +32,7 @@ const FisheyeShader = {
         varying vec2 vUv;
         void main() {
             vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            gl_Position = vec4(position, 1.0);
         }
     `,
     fragmentShader: `
@@ -144,7 +144,7 @@ const CinematicShader = {
         varying vec2 vUv;
         void main() {
             vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            gl_Position = vec4(position, 1.0);
         }
     `,
     fragmentShader: `
@@ -382,7 +382,7 @@ class Planetarium {
         this.init();
         this.addEventListeners();
 
-        // Start loop immediately to show welcome dome
+        // Start animation loop immediately
         requestAnimationFrame((t) => this.animate(t));
     }
 
@@ -1015,6 +1015,8 @@ class Planetarium {
         if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => { });
         }
+
+        requestAnimationFrame((t) => this.animate(t));
     }
 
     updateTimeline(time) {
@@ -1135,6 +1137,7 @@ class Planetarium {
 
     animate(time) {
         requestAnimationFrame(this.animate.bind(this));
+        if (!this.isActive && !this.welcomeGroup.visible) return; // Completely idle 
         if (!time) return;
 
         const t = time * 0.001;
