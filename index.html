@@ -23,22 +23,30 @@
         <aside class="dashboard-sidebar">
             <div class="logo-area">
                 <span class="status-dot pulsing"></span>
-                <h1>MISSION CONTROL</h1>
+                <h1>OPERATIONS COMMAND</h1>
             </div>
 
             <nav class="scene-nav">
-                <h3>SCENE SELECT</h3>
+                <h3>SEQUENCE CONTROL</h3>
                 <button onclick="window.app.jumpToScene(0)">01. EMERGENCE</button>
-                <button onclick="window.app.jumpToScene(1)">02. SILENCE</button>
+                <button onclick="window.app.jumpToScene(1)">02. THE SILENCE</button>
                 <button onclick="window.app.jumpToScene(2)">03. STRUCTURES</button>
-                <button onclick="window.app.jumpToScene(3)">04. SYSTEMS</button>
-                <button onclick="window.app.jumpToScene(4)">05. TRANSCEND</button>
+                <button onclick="window.app.jumpToScene(3)">04. SOLAR SYSTEMS</button>
+                <button onclick="window.app.jumpToScene(4)">05. TRANSCENDENCE</button>
                 <button onclick="window.app.jumpToScene(5)">06. INFINITY</button>
             </nav>
 
+            <div class="audio-control">
+                <h3>VOLUME MASTER</h3>
+                <div class="volume-container">
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.4">
+                    <span id="volume-readout">40%</span>
+                </div>
+            </div>
+
             <div class="fx-panel">
-                <h3>FX OVERRIDE</h3>
-                <button id="fx-aurora">COMET</button>
+                <h3>MANUAL OVERRIDES</h3>
+                <button id="fx-aurora">COMET ZIP</button>
                 <button id="fx-supernova">SUPERNOVA</button>
             </div>
         </aside>
@@ -46,21 +54,27 @@
         <!-- Main Content -->
         <main class="dashboard-main">
             <header class="dashboard-header">
-                <div class="timer-readout">
-                    <span class="label">ELAPSED TIME</span>
+                <div class="telemetry-item">
+                    <span class="label">MISSION CLOCK</span>
                     <span id="time-display">00:00:00</span>
                 </div>
-                <div class="scene-readout">
-                    <span class="label">CURRENT SEQUENCE</span>
+                <div class="telemetry-item wide">
+                    <span class="label">TIMELINE TRACKER</span>
+                    <div id="timeline-progress-container">
+                        <div id="timeline-progress-bar"></div>
+                    </div>
+                </div>
+                <div class="telemetry-item">
+                    <span class="label">ACTIVE STAGE</span>
                     <span id="current-scene-name">STANDBY</span>
                 </div>
-                <button id="master-start-btn">ENGAGE SEQUENCE</button>
+                <button id="master-start-btn">ENGAGE MISSION</button>
             </header>
 
             <section class="visuals-grid">
-                <!-- Preview (Human View) -->
+                <!-- Preview (Director View) -->
                 <div class="monitor-frame">
-                    <span class="monitor-label">PREVIEW (PERSPECTIVE)</span>
+                    <span class="monitor-label">PREVIEW (OPERATIONS)</span>
                     <canvas id="preview-canvas"></canvas>
                 </div>
 
@@ -74,11 +88,10 @@
             <!-- Script Panel -->
             <footer class="script-panel">
                 <div class="script-header">
-                    <span>DIRECTOR'S NARRATIVE SCRIPT</span>
-                    <span id="sync-indicator">SYNC: ACTIVE</span>
+                    <span>DIRECTOR'S NARRATIVE SCRIPT (S.K. PLANETARIUM)</span>
+                    <span id="sync-indicator">TELEMETRY SYNC: ACTIVE</span>
                 </div>
                 <div id="script-content" class="script-scroller">
-                    <!-- Script lines will be injected here -->
                     <p class="script-line" data-start="0">"Welcome, students, to the Sirindhorn Planetarium. Today, we
                         leave Earth behind..."</p>
                     <p class="script-line" data-start="10">"We enter 'The Great Silence'. Notice how the light of the
@@ -89,12 +102,29 @@
                         call home."</p>
                     <p class="script-line" data-start="115">"Preparing for warp. Hold on as we transcend the limits of
                         the galaxy."</p>
+
+                    <div class="script-outro">
+                        <p class="script-line thai-script" data-start="150">
+                            "สวัสดีครับท่านผู้มีเกียรติทุกท่าน ขอต้อนรับเข้าสู่ท้องฟ้าจำลองสิรินธร
+                            โรงเรียนสวนกุหลาบวิทยาลัย ในวันนี้ เราจะพาทุกท่านเดินทางไปสู่การสำรวจอวกาศอันกว้างใหญ่ไพศาล
+                            ท่ามกลางดวงดาวนับล้านล้านดวง กาแล็กซีอันน่าอัศจรรย์ และความลี้ลับของจักรวาลที่รอคอยการค้นพบ
+                            ขอเชิญทุกท่านนั่งพักผ่อน และเตรียมตัวสัมผัสประสบการณ์ที่น่าประทับใจ ณ ท้องฟ้าจำลองแห่งนี้"
+                        </p>
+                        <p class="script-line eng-script" data-start="155">
+                            "Good afternoon, distinguished guests. Welcome to the Sirindhorn Planetarium at Suankularb
+                            Wittayalai School. Today, we will take you on an extraordinary journey through the vast
+                            expanse of the cosmos, among billions upon billions of stars, magnificent galaxies, and the
+                            profound mysteries of the universe waiting to be discovered. Please sit back, relax, and
+                            prepare yourself for an unforgettable experience here at our planetarium."
+                        </p>
+                    </div>
                 </div>
             </footer>
         </main>
     </div>
 
-    <div id="welcome-image-container">
+    <!-- Hidden by default now -->
+    <div id="welcome-image-container" style="display: none;">
         <img src="welcome.png" id="static-welcome-img" alt="Welcome">
     </div>
 

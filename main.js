@@ -971,21 +971,27 @@ class Planetarium {
             const pr = Math.min(window.devicePixelRatio, 2);
 
             // 1. Program Canvas (Dome)
-            const w = this.canvas.clientWidth;
-            const h = this.canvas.clientHeight;
-            this.renderer.setPixelRatio(pr);
-            this.renderer.setSize(w, h);
-            this.composer.setSize(w, h);
-            if (this.fisheyePass) {
-                this.fisheyePass.uniforms.resolution.value.set(w * pr, h * pr);
+            const w = this.canvas.clientWidth || window.innerWidth;
+            const h = this.canvas.clientHeight || window.innerHeight;
+
+            if (w > 0 && h > 0) {
+                this.renderer.setPixelRatio(pr);
+                this.renderer.setSize(w, h, false);
+                this.composer.setSize(w, h);
+                if (this.fisheyePass) {
+                    this.fisheyePass.uniforms.resolution.value.set(w * pr, h * pr);
+                }
             }
 
             // 2. Preview Canvas (Director)
-            const pw = this.previewCanvas.clientWidth;
-            const ph = this.previewCanvas.clientHeight;
-            this.previewRenderer.setSize(pw, ph);
-            this.previewCamera.aspect = pw / ph;
-            this.previewCamera.updateProjectionMatrix();
+            const pw = this.previewCanvas.clientWidth || window.innerWidth / 2;
+            const ph = this.previewCanvas.clientHeight || window.innerHeight / 2;
+
+            if (pw > 0 && ph > 0) {
+                this.previewRenderer.setSize(pw, ph, false);
+                this.previewCamera.aspect = pw / ph;
+                this.previewCamera.updateProjectionMatrix();
+            }
         });
 
         document.getElementById('welcome-image-container').addEventListener('click', () => {
@@ -999,8 +1005,33 @@ class Planetarium {
 
         // Dashboard Buttons
         document.getElementById('master-start-btn').addEventListener('click', () => {
-            this.start();
+            if (!this.isActive) this.start();
+            else this.togglePause();
         });
+
+        // Volume Master
+        const volSlider = document.getElementById('volume-slider');
+        const volReadout = document.getElementById('volume-readout');
+        volSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            volReadout.innerText = `${Math.round(val * 100)}%`;
+            if (this.sound) this.sound.setVolume(val);
+        });
+
+        // Initialize Volume
+        if (this.sound) this.sound.setVolume(parseFloat(volSlider.value));
+    }
+
+    togglePause() {
+        if (this.sound.isPlaying) {
+            this.sound.pause();
+            this.isActive = false;
+            document.getElementById('master-start-btn').innerText = "RESUME MISSION";
+        } else {
+            this.sound.play();
+            this.isActive = true;
+            document.getElementById('master-start-btn').innerText = "ABORT MISSION";
+        }
     }
 
     toggleFullscreen() {
@@ -1028,10 +1059,11 @@ class Planetarium {
         this.isActive = true;
         this.startTime = performance.now();
 
-        document.getElementById('welcome-image-container').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('welcome-image-container').style.display = 'none';
-        }, 1000);
+        // Hide overlay if it exists
+        const overlay = document.getElementById('welcome-image-container');
+        if (overlay) overlay.style.display = 'none';
+
+        document.getElementById('master-start-btn').innerText = "ABORT MISSION";
 
         // Force Fullscreen on start for dome immersion
         this.enterFullscreen();
@@ -1183,12 +1215,18 @@ class Planetarium {
 
     updateDashboard(time) {
         const elapsed = (time - this.startTime) / 1000;
+        const total = 161; // 2 minutes 41 seconds
+        const progress = Math.min(elapsed / total, 1);
+
         const mins = Math.floor(elapsed / 60);
         const secs = Math.floor(elapsed % 60);
         const ms = Math.floor((elapsed % 1) * 100);
 
         document.getElementById('time-display').innerText =
             `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}:${ms.toString().padStart(2, '0')}`;
+
+        // Timeline Tracker Update
+        document.getElementById('timeline-progress-bar').style.width = `${progress * 100}%`;
 
         // Sync Script Lines
         const scriptLines = document.querySelectorAll('.script-line');
