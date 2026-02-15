@@ -420,53 +420,70 @@ class Planetarium {
         // Draw background (transparent)
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // SAC Logo
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 10;
+        // Drawing colors from reference
+        const pinkRed = '#ff6b6b';
+        const saturnOrange = '#ffad5a';
+        const textWhite = 'rgba(255,255,255,0.95)';
+
+        // SAC Logo (Top)
+        ctx.strokeStyle = textWhite;
+        ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.arc(512, 250, 120, 0, Math.PI * 2);
+        ctx.arc(512, 180, 110, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 100px Outfit';
+        ctx.fillStyle = textWhite;
+        ctx.font = 'bold 90px Outfit';
         ctx.textAlign = 'center';
-        ctx.fillText('SAC+', 512, 285);
+        ctx.fillText('SAC+', 512, 215);
 
-        // Rocket drawing (Larger & Clearer)
+        // Rocket drawing (Left, tilted slightly)
         ctx.save();
-        ctx.translate(220, 500);
-        ctx.rotate(-Math.PI * 0.15);
-        ctx.fillStyle = '#ff3333';
+        ctx.translate(250, 480);
+        ctx.rotate(-Math.PI * 0.1);
+        ctx.fillStyle = pinkRed;
         ctx.beginPath();
-        ctx.moveTo(0, -150);
-        ctx.lineTo(60, 0);
-        ctx.lineTo(-60, 0);
+        ctx.moveTo(0, -180);
+        ctx.quadraticCurveTo(80, 0, 80, 150);
+        ctx.lineTo(-80, 150);
+        ctx.quadraticCurveTo(-80, 0, 0, -180);
         ctx.fill();
-        ctx.fillRect(-30, 0, 60, 140);
+        // Rocket fins
+        ctx.beginPath();
+        ctx.moveTo(-80, 100);
+        ctx.lineTo(-120, 150);
+        ctx.lineTo(-80, 150);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(80, 100);
+        ctx.lineTo(120, 150);
+        ctx.lineTo(80, 150);
+        ctx.fill();
         ctx.restore();
 
-        // Saturn drawing (Larger & Clearer)
+        // Saturn drawing (Right, with soft glow)
         ctx.save();
-        ctx.translate(804, 500);
-        ctx.fillStyle = '#ffaa33';
+        ctx.translate(774, 480);
+        ctx.fillStyle = saturnOrange;
         ctx.beginPath();
-        ctx.arc(0, 0, 90, 0, Math.PI * 2);
+        ctx.arc(0, 0, 110, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-        ctx.lineWidth = 15;
+        // Rings
+        ctx.strokeStyle = 'rgba(255,180,255,0.6)';
+        ctx.lineWidth = 20;
         ctx.beginPath();
-        ctx.ellipse(0, 0, 160, 40, Math.PI * 0.15, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, 200, 50, Math.PI * 0.15, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
 
-        // Welcome Text (Much larger)
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.font = '300 45px Outfit';
-        ctx.fillText('WELCOME TO', 512, 650);
+        // Welcome Text (Centered)
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.font = '300 50px Outfit';
+        ctx.fillText('WELCOME TO', 512, 600);
 
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = textWhite;
         ctx.font = 'bold 85px Outfit';
-        ctx.letterSpacing = "8px";
-        ctx.fillText('SIRINDHORN PLANETARIUM', 512, 760);
+        ctx.letterSpacing = "6px";
+        ctx.fillText('SIRINDHORN PLANETARIUM', 512, 710);
 
         const texture = new THREE.CanvasTexture(canvas);
         texture.anisotropy = 16;
@@ -477,12 +494,12 @@ class Planetarium {
             side: THREE.DoubleSide
         });
 
-        // Zenith placement - Moved MUCH closer for sharpness
+        // Zenith placement - Corrected orientation
         const geom = new THREE.PlaneGeometry(1200, 1200);
         this.welcomeMesh = new THREE.Mesh(geom, mat);
-        this.welcomeMesh.position.set(0, 500, 0); // Closer = sharper
-        this.welcomeMesh.rotation.x = Math.PI * 0.5;
-        this.welcomeMesh.rotation.z = Math.PI;
+        this.welcomeMesh.position.set(0, 500, 0);
+        this.welcomeMesh.rotation.x = -Math.PI * 0.5; // Flip to face downward
+        this.welcomeMesh.rotation.z = 0; // Remove rotation correction
         this.welcomeGroup.add(this.welcomeMesh);
     }
 
