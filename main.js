@@ -42,12 +42,11 @@ const FisheyeShader = {
         const float PI = 3.14159265359;
 
         void main() {
-            vec2 uv = vUv - 0.5;
-            float aspect = resolution.x / resolution.y;
-            uv.x *= aspect; // Correct x-axis to match physical scale of y-axis
-
-            float r = length(uv) * 2.0; // r=1.0 at screen edge (vertical)
+            // Precise aspect ratio correction for a perfect circle
+            float minRes = min(resolution.x, resolution.y);
+            vec2 uv = (vUv - 0.5) * resolution.xy / (minRes * 0.5);
             
+            float r = length(uv);
             if (r > 1.0) {
                 gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
                 return;
@@ -56,11 +55,11 @@ const FisheyeShader = {
             float theta = atan(uv.y, uv.x);
             float phi = r * PI * 0.5;
 
-            // Sample cube map - Correcting for dome view projection
+            // Corrected mapping: Screen X/Y -> World X/Z with Zenith Up
             vec3 dir = vec3(
-                sin(phi) * sin(theta), // X
-                cos(phi),              // Y (Zenith)
-                sin(phi) * cos(theta)  // Z
+                sin(phi) * cos(theta), // Right
+                cos(phi),               // Up (Zenith)
+                sin(phi) * sin(theta)  // Forward
             );
             
             // Use textureCube for maximum compatibility
@@ -167,9 +166,13 @@ const CinematicShader = {
             float grain = (random(uv + time) - 0.5) * amount;
             color.rgb += grain;
 
-            // Vignette
-            float dist = length(uv - 0.5);
-            float vignette = smoothstep(0.8, 0.4, dist);
+            // Aspect-aware Vignette
+            float minRes = 1.0; // In UV space
+            vec2 vignUv = (vUv - 0.5);
+            // We don't have resolution here, so we assume the previous pass fixed the circle.
+            // But to be safe, let's keep vignette very soft at the edges.
+            float dist = length(vignUv);
+            float vignette = smoothstep(0.8, 0.3, dist);
             color.rgb *= vignette;
 
             // IMAX color grade
@@ -464,11 +467,11 @@ class Planetarium {
             side: THREE.DoubleSide
         });
 
-        const geom = new THREE.PlaneGeometry(2500, 2500);
+        const geom = new THREE.PlaneGeometry(2800, 2800);
         this.welcomeMesh = new THREE.Mesh(geom, mat);
-        this.welcomeMesh.position.set(0, 1000, 0);
+        this.welcomeMesh.position.set(0, 1500, 0);
         this.welcomeMesh.rotation.x = -Math.PI * 0.5;
-        this.welcomeMesh.rotation.z = 0; // Reset to default
+        this.welcomeMesh.rotation.z = Math.PI * 0.5;
         this.welcomeGroup.add(this.welcomeMesh);
     }
 
