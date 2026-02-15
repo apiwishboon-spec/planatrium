@@ -15,10 +15,9 @@ const CONFIG = {
         { name: 'Emergence', duration: 10 },
         { name: 'The Great Silence', duration: 35 },
         { name: 'Celestial Structures', duration: 30 },
-        { name: 'Systems of Light', duration: 40 },
-        { name: 'Transcendence', duration: 30 },
-        { name: 'Infinite Scale', duration: 10 },
-        { name: 'Stardust Memory', duration: 6 }
+        { name: 'Solar Systems', duration: 30 },
+        { name: 'Transcendence', duration: 25 },
+        { name: 'Infinity', duration: 31 } // Total 161 seconds (2:41)
     ]
 };
 
@@ -420,7 +419,15 @@ class Planetarium {
         this.audioLoader.load('music.mp3', (buffer) => {
             this.sound.setBuffer(buffer);
             this.sound.setLoop(true);
-            this.sound.setVolume(0.4);
+            this.sound.setVolume(parseFloat(document.getElementById('volume-slider').value));
+
+            // Audio Analyser for Dashboard Meter
+            if (!this.isProgram) {
+                this.analyser = audioContext.createAnalyser();
+                this.analyser.fftSize = 64;
+                this.sound.getOutput().connect(this.analyser);
+                this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+            }
         });
 
         // Welcome Dome Group
@@ -1351,6 +1358,24 @@ class Planetarium {
 
         // 2. Render for Director Menu (Preview Monitor)
         this.previewRenderer.render(this.scene, this.previewCamera);
+
+        // 3. Audio Meter Update (Director Only)
+        if (!this.isProgram && this.analyser && this.sound.isPlaying) {
+            this.analyser.getByteFrequencyData(this.dataArray);
+
+            // Simple level detection
+            let sum = 0;
+            for (let i = 0; i < this.dataArray.length; i++) sum += this.dataArray[i];
+            const average = sum / this.dataArray.length;
+            const level = (average / 128) * 100; // Normalized percentage
+
+            // Set bars with slight variance for "stereo" feel
+            document.getElementById('meter-l').style.height = `${Math.min(level * 1.1, 100)}%`;
+            document.getElementById('meter-r').style.height = `${Math.min(level * 0.9, 100)}%`;
+        } else if (!this.isProgram) {
+            document.getElementById('meter-l').style.height = '0%';
+            document.getElementById('meter-r').style.height = '0%';
+        }
     }
 }
 

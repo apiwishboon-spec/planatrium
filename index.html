@@ -46,6 +46,25 @@
                     <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.4">
                     <span id="volume-readout">40%</span>
                 </div>
+                <!-- Audio Meter -->
+                <div class="audio-meter-container">
+                    <div class="meter-labels">
+                        <span>0</span>
+                        <span>-6</span>
+                        <span>-12</span>
+                        <span>-18</span>
+                        <span>-30</span>
+                        <span>-∞</span>
+                    </div>
+                    <div class="meter-bars">
+                        <div class="meter-bar-track">
+                            <div id="meter-l" class="meter-bar-fill"></div>
+                        </div>
+                        <div class="meter-bar-track">
+                            <div id="meter-r" class="meter-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="fx-panel">
@@ -57,7 +76,8 @@
             <div class="monitor-controls"
                 style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
                 <button onclick="window.app.launchProgramWindow()"
-                    style="width: 100%; border-color: #00ff00; color: #00ff00;">LAUNCH DOME WINDOW</button>
+                    style="width: 100%; border-color: #00ff00; color: #00ff00; background: rgba(0,255,0,0.05);">LAUNCH
+                    DOME WINDOW</button>
             </div>
         </aside>
 
@@ -98,29 +118,18 @@
             <!-- Script Panel -->
             <footer class="script-panel">
                 <div class="script-header">
-                    <span>DIRECTOR'S NARRATIVE SCRIPT (S.K. PLANETARIUM)</span>
+                    <span>FINALE NARRATION (S.K. PLANETARIUM)</span>
                     <span id="sync-indicator">TELEMETRY SYNC: ACTIVE</span>
                 </div>
                 <div id="script-content" class="script-scroller">
-                    <p class="script-line" data-start="0">"Welcome, students, to the Sirindhorn Planetarium. Today, we
-                        leave Earth behind..."</p>
-                    <p class="script-line" data-start="10">"We enter 'The Great Silence'. Notice how the light of the
-                        Milky Way begins to emerge..."</p>
-                    <p class="script-line" data-start="45">"Look up at the Celestial Structures. We are moving towards
-                        the galactic core."</p>
-                    <p class="script-line" data-start="75">"Entering the Solar System. Here are the systems of light we
-                        call home."</p>
-                    <p class="script-line" data-start="115">"Preparing for warp. Hold on as we transcend the limits of
-                        the galaxy."</p>
-
                     <div class="script-outro">
-                        <p class="script-line thai-script" data-start="150">
+                        <p class="script-line thai-script" data-start="125">
                             "สวัสดีครับท่านผู้มีเกียรติทุกท่าน ขอต้อนรับเข้าสู่ท้องฟ้าจำลองสิรินธร
                             โรงเรียนสวนกุหลาบวิทยาลัย ในวันนี้ เราจะพาทุกท่านเดินทางไปสู่การสำรวจอวกาศอันกว้างใหญ่ไพศาล
                             ท่ามกลางดวงดาวนับล้านล้านดวง กาแล็กซีอันน่าอัศจรรย์ และความลี้ลับของจักรวาลที่รอคอยการค้นพบ
                             ขอเชิญทุกท่านนั่งพักผ่อน และเตรียมตัวสัมผัสประสบการณ์ที่น่าประทับใจ ณ ท้องฟ้าจำลองแห่งนี้"
                         </p>
-                        <p class="script-line eng-script" data-start="155">
+                        <p class="script-line eng-script" data-start="135">
                             "Good afternoon, distinguished guests. Welcome to the Sirindhorn Planetarium at Suankularb
                             Wittayalai School. Today, we will take you on an extraordinary journey through the vast
                             expanse of the cosmos, among billions upon billions of stars, magnificent galaxies, and the
