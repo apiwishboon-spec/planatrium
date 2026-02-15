@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Journey - Planetarium Intro</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <noscript>
+        <div style="color: white; background: black; padding: 20px; text-align: center;">
+            JavaScript is required to run this experience.
+        </div>
+    </noscript>
+
+    <div id="protocol-warning"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; background: #ff4444; color: white; padding: 10px; text-align: center; z-index: 1000; font-size: 0.9rem;">
+        ⚠️ Local File Detected: Browser security (CORS) blocks modular JS on <b>file://</b>. Please run this via a local
+        server (e.g., Python or Live Server).
+    </div>
+
+    <script>
+        if (window.location.protocol === 'file:') {
+            document.getElementById('protocol-warning').style.display = 'block';
+        }
+    </script>
+    <div id="ui-container">
+        <div id="welcome-screen">
+            <h1 class="title">COSMIC JOURNEY</h1>
+            <p class="subtitle">A Full-Dome Planetarium Experience</p>
+            <button id="start-button">START EXPERIENCE</button>
+            <p class="hint">Ensure your sound is on for the full experience.</p>
+        </div>
+        <div id="scene-info" class="hidden">
+            <span id="scene-name"></span>
+        </div>
+    </div>
+
+
+    <audio id="bg-music" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-deep-space-97.mp3" type="audio/mpeg">
+    </audio>
+
+    <canvas id="main-canvas"></canvas>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
