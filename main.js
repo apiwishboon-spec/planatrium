@@ -904,6 +904,10 @@ class Planetarium {
             }
         });
 
+        document.getElementById('welcome-image-container').addEventListener('click', () => {
+            this.start();
+        });
+
         document.getElementById('start-button').addEventListener('click', () => {
             this.start();
         });
