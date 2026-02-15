@@ -337,20 +337,30 @@ html.program-mode #fullscreen-btn.hidden {
     object-fit: contain;
 }
 
+/* CSS Mask - Guaranteed Circle */
+.dome-circle-mask {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 96vmin;
+    /* Fit to min dimension */
+    height: 96vmin;
+    border-radius: 50%;
+    /* Massive shadow acts as the "black outside" */
+    box-shadow: 0 0 0 200vmax black;
+    border: 2px solid rgba(138, 43, 226, 0.5);
+    /* Rim guide */
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Ensure container clips the massive shadow */
 .dome-preview-container {
     position: relative;
     width: 100%;
     height: 100%;
-}
-
-.dome-mask {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 10;
+    overflow: hidden;
 }
 
 /* Script Panel */

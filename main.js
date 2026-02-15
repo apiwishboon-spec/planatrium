@@ -1369,7 +1369,8 @@ class Planetarium {
 
         // Sync Dome Camera to Preview Camera (Mirror Position/Rotation)
         this.domeCamera.position.copy(this.previewCamera.position);
-        this.domeCamera.rotation.copy(this.previewCamera.rotation);
+        this.domeCamera.quaternion.copy(this.previewCamera.quaternion);
+        this.domeCamera.updateMatrixWorld(); // Force update
 
         // FORCE ASPECT RATIO UPDATE FOR PROGRAM MODE
         if (this.isProgram) {

@@ -119,18 +119,8 @@
 
                         <canvas id="main-canvas"></canvas>
 
-                        <!-- Circular Dome Mask -->
-                        <svg class="dome-mask" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <defs>
-                                <mask id="circleMask">
-                                    <rect width="100" height="100" fill="white" />
-                                    <circle cx="50" cy="50" r="48" fill="black" />
-                                </mask>
-                            </defs>
-                            <rect width="100" height="100" fill="black" mask="url(#circleMask)" />
-                            <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(138, 43, 226, 0.5)"
-                                stroke-width="0.5" />
-                        </svg>
+                        <!-- CSS-based Circular Mask (Cannot distort) -->
+                        <div class="dome-circle-mask"></div>
 
                         <!-- Fullscreen Button (moved here) -->
                         <button id="fullscreen-btn" title="Toggle Fullscreen">
