@@ -440,15 +440,17 @@ class Planetarium {
 
         this.fisheyePass = new ShaderPass(FisheyeShader);
         this.fisheyePass.uniforms['tCube'].value = this.cubeCamera.renderTarget.texture;
+
+        // Use clientWidth/Height for the shader resolution logic
+        const w = this.canvas.clientWidth || window.innerWidth;
+        const h = this.canvas.clientHeight || window.innerHeight;
         const pr = this.renderer.getPixelRatio();
-        this.fisheyePass.uniforms.resolution.value.set(window.innerWidth * pr, window.innerHeight * pr);
+        this.fisheyePass.uniforms.resolution.value.set(w * pr, h * pr);
         this.composer.addPass(this.fisheyePass);
 
-        // ... bloom ...
-
         this.bloomPass = new UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            2.5, 0.5, 0.4 // Much stronger bloom for starlight glow
+            new THREE.Vector2(w, h),
+            2.5, 0.5, 0.4
         );
         this.bloomPass.enabled = false;
         this.composer.addPass(this.bloomPass);
@@ -461,6 +463,10 @@ class Planetarium {
     }
 
     init() {
+        // Universal Ambient Light - prevents total blackness in control room
+        const ambient = new THREE.AmbientLight(0xffffff, 0.1);
+        this.scene.add(ambient);
+
         this.createWelcomeDome();
         this.createStarField();
         this.createNebulae();
@@ -1042,6 +1048,7 @@ class Planetarium {
     }
 
     updateTimeline(time) {
+        const t = time * 0.001;
         this.elapsedTime = (time - this.startTime) / 1000;
 
         let cumulativeTime = 0;
@@ -1050,12 +1057,12 @@ class Planetarium {
         for (let i = 0; i < CONFIG.timeline.length; i++) {
             const scene = CONFIG.timeline[i];
             if (this.elapsedTime < cumulativeTime + scene.duration) {
-                if (this.currentSceneIndex !== i) {
+                const name = scene.name; // Get name first
+                if (this.currentSceneIndex !== i || document.getElementById('current-scene-name').textContent === 'STANDBY') {
                     this.currentSceneIndex = i;
-                    const name = scene.name;
                     document.getElementById('current-scene-name').textContent = name;
                 }
-                this.handleSceneAnimation(i, this.elapsedTime - cumulativeTime);
+                this.handleSceneAnimation(i, this.elapsedTime - cumulativeTime, t);
                 foundScene = true;
                 break;
             }
@@ -1063,12 +1070,11 @@ class Planetarium {
         }
 
         if (!foundScene && this.elapsedTime > 161) {
-            // Infinite hold at the end
-            this.handleSceneAnimation(7, 5.9);
+            this.handleSceneAnimation(7, 5.9, t);
         }
     }
 
-    handleSceneAnimation(index, sceneTime) {
+    handleSceneAnimation(index, sceneTime, t) {
         const scene = CONFIG.timeline[index];
         const progress = sceneTime / scene.duration;
 
@@ -1186,7 +1192,7 @@ class Planetarium {
 
         // Sync Script Lines
         const scriptLines = document.querySelectorAll('.script-line');
-        let currentLine = null;
+        let currentLine = scriptLines[0]; // Default to first line
         scriptLines.forEach(line => {
             const start = parseFloat(line.getAttribute('data-start'));
             if (elapsed >= start) {
@@ -1197,6 +1203,7 @@ class Planetarium {
         if (currentLine) {
             scriptLines.forEach(l => l.classList.remove('active'));
             currentLine.classList.add('active');
+            // Use block: 'start' with some offset logic if possible, or center
             currentLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
