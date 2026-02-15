@@ -331,22 +331,25 @@ class Planetarium {
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
             antialias: true,
+            alpha: false,
+            stencil: false,
+            precision: 'highp',
             powerPreference: 'high-performance'
         });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // High fidelity capping at 2x for performance
         this.renderer.setSize(window.innerWidth, window.innerHeight);
 
         // Scenes
-        this.scene = new THREE.Scene(); // Real world scene
-        this.uiScene = new THREE.Scene(); // Final output scene
+        this.scene = new THREE.Scene();
+        this.uiScene = new THREE.Scene();
 
-        // Cameras
-        // Higher resolution for the cube camera to avoid "ugly" pixelation
-        const cubeRes = 2048;
-        this.cubeCamera = new THREE.CubeCamera(0.1, 20000, new THREE.WebGLCubeRenderTarget(cubeRes, {
+        // 4K Ultra-High Resolution Cube Mapping for the Dome
+        const cubeRes = 4096;
+        this.cubeCamera = new THREE.CubeCamera(0.1, 30000, new THREE.WebGLCubeRenderTarget(cubeRes, {
             generateMipmaps: true,
             minFilter: THREE.LinearMipmapLinearFilter,
             magFilter: THREE.LinearFilter,
+            anisotropy: 16,
             format: THREE.RGBAFormat,
             colorSpace: THREE.SRGBColorSpace
         }));
@@ -386,6 +389,8 @@ class Planetarium {
 
         this.fisheyePass = new ShaderPass(FisheyeShader);
         this.fisheyePass.uniforms['tCube'].value = this.cubeCamera.renderTarget.texture;
+        const pr = this.renderer.getPixelRatio();
+        this.fisheyePass.uniforms.resolution.value.set(window.innerWidth * pr, window.innerHeight * pr);
         this.composer.addPass(this.fisheyePass);
 
         // ... bloom ...
@@ -897,10 +902,11 @@ class Planetarium {
         window.addEventListener('resize', () => {
             const w = window.innerWidth;
             const h = window.innerHeight;
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             this.renderer.setSize(w, h);
             this.composer.setSize(w, h);
             if (this.fisheyePass) {
-                this.fisheyePass.uniforms.resolution.value.set(w, h);
+                this.fisheyePass.uniforms.resolution.value.set(w * this.renderer.getPixelRatio(), h * this.renderer.getPixelRatio());
             }
         });
 
