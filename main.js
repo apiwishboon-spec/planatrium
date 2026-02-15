@@ -328,6 +328,12 @@ const WelcomeShader = {
 class Planetarium {
     constructor() {
         this.canvas = document.getElementById('main-canvas');
+        this.previewCanvas = document.getElementById('preview-canvas');
+
+        // Initial sizing - use window fallback if client dimensions aren't ready
+        const width = this.canvas.clientWidth || window.innerWidth / 2;
+        const height = this.canvas.clientHeight || window.innerHeight / 2;
+
         this.renderer = new THREE.WebGLRenderer({
             canvas: this.canvas,
             antialias: true,
@@ -337,16 +343,15 @@ class Planetarium {
             powerPreference: 'high-performance'
         });
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+        this.renderer.setSize(width, height);
 
         // Preview Monitor Renderer
-        this.previewCanvas = document.getElementById('preview-canvas');
         this.previewRenderer = new THREE.WebGLRenderer({
             canvas: this.previewCanvas,
             antialias: true
         });
         this.previewRenderer.setPixelRatio(1);
-        this.previewRenderer.setSize(this.previewCanvas.clientWidth, this.previewCanvas.clientHeight);
+        this.previewRenderer.setSize(width, height); // Mirror initial size
 
         // Scenes
         this.scene = new THREE.Scene();
@@ -366,7 +371,7 @@ class Planetarium {
         this.scene.add(this.cubeCamera);
 
         // 2. Director Preview Camera (Standard Perspective)
-        this.previewCamera = new THREE.PerspectiveCamera(75, this.previewCanvas.clientWidth / this.previewCanvas.clientHeight, 0.1, 40000);
+        this.previewCamera = new THREE.PerspectiveCamera(75, width / height, 0.1, 40000);
         this.scene.add(this.previewCamera);
 
         this.finalCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -385,7 +390,8 @@ class Planetarium {
         this.milkyWay = null;
         this.sun = null;
         this.planets = [];
-        this.shootingStars = [];
+        // Pre-bind animation for performance
+        this._animate = this.animate.bind(this);
 
         // Global expose for dashboard buttons
         window.app = this;
@@ -420,8 +426,13 @@ class Planetarium {
         this.init();
         this.addEventListeners();
 
+        // One-time manual trigger to sync canvas sizes after layout
+        window.dispatchEvent(new Event('resize'));
+
+        console.log("Planetarium Mission Control: ONLINE");
+
         // Start animation loop immediately
-        requestAnimationFrame((t) => this.animate(t));
+        requestAnimationFrame(this._animate);
     }
 
     setupPostProcessing() {
@@ -951,14 +962,24 @@ class Planetarium {
 
     addEventListeners() {
         window.addEventListener('resize', () => {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            const pr = Math.min(window.devicePixelRatio, 2);
+
+            // 1. Program Canvas (Dome)
+            const w = this.canvas.clientWidth;
+            const h = this.canvas.clientHeight;
+            this.renderer.setPixelRatio(pr);
             this.renderer.setSize(w, h);
             this.composer.setSize(w, h);
             if (this.fisheyePass) {
-                this.fisheyePass.uniforms.resolution.value.set(w * this.renderer.getPixelRatio(), h * this.renderer.getPixelRatio());
+                this.fisheyePass.uniforms.resolution.value.set(w * pr, h * pr);
             }
+
+            // 2. Preview Canvas (Director)
+            const pw = this.previewCanvas.clientWidth;
+            const ph = this.previewCanvas.clientHeight;
+            this.previewRenderer.setSize(pw, ph);
+            this.previewCamera.aspect = pw / ph;
+            this.previewCamera.updateProjectionMatrix();
         });
 
         document.getElementById('welcome-image-container').addEventListener('click', () => {
@@ -997,6 +1018,7 @@ class Planetarium {
 
     start() {
         if (this.isActive) return;
+        console.log("Mission Engage: Sequence Initiated");
         this.isActive = true;
         this.startTime = performance.now();
 
@@ -1197,7 +1219,7 @@ class Planetarium {
     }
 
     animate(time) {
-        requestAnimationFrame(this.animate.bind(this));
+        requestAnimationFrame(this._animate);
         if (!time) return;
 
         const t = time * 0.001;
