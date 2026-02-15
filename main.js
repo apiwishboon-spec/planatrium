@@ -415,64 +415,8 @@ class Planetarium {
     }
 
     createWelcomeDome() {
-        const textureLoader = new THREE.TextureLoader();
-
-        // Load the AI-generated high-fidelity image
-        textureLoader.load('welcome.png', (texture) => {
-            console.log("Welcome artwork loaded successfully.");
-            texture.anisotropy = 16;
-            this.welcomeMesh.material.map = texture;
-            this.welcomeMesh.material.needsUpdate = true;
-        }, undefined, (err) => {
-            console.warn("welcome.png not found, using procedural fallback.");
-        });
-
-        const canvas = document.createElement('canvas');
-        canvas.width = 1024;
-        canvas.height = 1024;
-        const ctx = canvas.getContext('2d');
-
-        // Procedural Fallback (Cosmic Theme)
-        const gradient = ctx.createRadialGradient(512, 512, 0, 512, 512, 512);
-        gradient.addColorStop(0, '#110022');
-        gradient.addColorStop(1, '#000000');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // SAC Logo
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(512, 280, 130, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 90px Outfit';
-        ctx.textAlign = 'center';
-        ctx.fillText('SAC+', 512, 310);
-
-        // Text
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.font = '300 45px Outfit';
-        ctx.fillText('WELCOME TO', 512, 650);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 85px Outfit';
-        ctx.letterSpacing = "6px";
-        ctx.fillText('SIRINDHORN PLANETARIUM', 512, 760);
-
-        const proceduralTexture = new THREE.CanvasTexture(canvas);
-        const mat = new THREE.MeshBasicMaterial({
-            map: proceduralTexture,
-            transparent: true,
-            side: THREE.DoubleSide
-        });
-
-        const geom = new THREE.PlaneGeometry(2800, 2800);
-        this.welcomeMesh = new THREE.Mesh(geom, mat);
-        this.welcomeMesh.position.set(0, 1500, 0);
-        this.welcomeMesh.rotation.x = -Math.PI * 0.5;
-        this.welcomeMesh.rotation.z = Math.PI * 0.5;
-        this.welcomeGroup.add(this.welcomeMesh);
+        // WelcomScreen is now handled by static HTML/CSS overlay for perfect fidelity
+        // No 3D objects needed for the landing page
     }
 
     createStarField() {
@@ -969,24 +913,15 @@ class Planetarium {
         this.isActive = true;
         this.startTime = performance.now();
         document.getElementById('welcome-screen').classList.add('hidden');
+        document.getElementById('welcome-image-container').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('welcome-image-container').style.display = 'none';
+        }, 1000);
+
         document.getElementById('scene-info').classList.remove('hidden');
 
         // Enable cinematic bloom now that the text is gone
         if (this.bloomPass) this.bloomPass.enabled = true;
-
-        // Fade out welcome dome
-        new Promise(resolve => {
-            const fade = () => {
-                if (this.welcomeMesh.material.opacity > 0) {
-                    this.welcomeMesh.material.opacity -= 0.05;
-                    requestAnimationFrame(fade);
-                } else {
-                    this.welcomeGroup.visible = false;
-                    resolve();
-                }
-            };
-            fade();
-        });
 
         const audio = document.getElementById('bg-music');
         audio.play().catch(e => console.error("Audio playback failed", e));
