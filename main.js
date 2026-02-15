@@ -103,22 +103,19 @@ const StarShader = {
             float r = length(cxy);
             if (r > 0.5) discard;
             
-            // Core Glow
-            float glow = exp(-r * 8.0);
+            // Smooth circular glow (no spikes)
+            float glow = 1.0 - smoothstep(0.0, 0.5, r);
+            glow = pow(glow, 2.0); // Softer falloff
             
-            // Twinkle
-            float twinkle = 0.8 + 0.3 * sin(time * 2.5 + vOffset);
+            // Enhanced twinkle for more life
+            float twinkle = 0.7 + 0.4 * sin(time * 2.5 + vOffset);
             
-            // Diffraction Spikes for bright stars
-            float spikes = 0.0;
-            if (vSize > 8.0) {
-                float beam1 = smoothstep(0.01, 0.0, abs(cxy.x) * abs(cxy.y) * 100.0);
-                float beam2 = smoothstep(0.01, 0.0, abs(cxy.x - cxy.y) * abs(cxy.x + cxy.y) * 100.0);
-                spikes = (beam1 + beam2) * 0.4 * glow;
-            }
+            // Brighter core for small stars
+            float core = exp(-r * 6.0);
+            float brightness = mix(glow, core, 0.5);
             
-            vec3 finalColor = vColor * (glow + spikes) * twinkle * opacity;
-            gl_FragColor = vec4(finalColor, glow * opacity);
+            vec3 finalColor = vColor * brightness * twinkle * opacity * 2.5;
+            gl_FragColor = vec4(finalColor, brightness * opacity);
         }
     `
 };
@@ -553,7 +550,7 @@ class Planetarium {
             const material = new THREE.ShaderMaterial({
                 uniforms: {
                     time: { value: 0 },
-                    opacity: { value: 0 }
+                    opacity: { value: 0.8 }
                 },
                 vertexShader: StarShader.vertexShader,
                 fragmentShader: StarShader.fragmentShader,
