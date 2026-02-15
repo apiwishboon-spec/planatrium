@@ -374,6 +374,10 @@ class Planetarium {
         this.previewCamera = new THREE.PerspectiveCamera(75, width / height, 0.1, 40000);
         this.scene.add(this.previewCamera);
 
+        // 3. Dedicated Dome Output Camera (Mirror Logic)
+        this.domeCamera = new THREE.PerspectiveCamera(75, width / height, 0.1, 40000);
+        this.scene.add(this.domeCamera);
+
         this.finalCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
         // Post-processing
@@ -1004,10 +1008,11 @@ class Planetarium {
             if (w > 0 && h > 0) {
                 this.renderer.setPixelRatio(pr);
                 this.renderer.setSize(w, h, false);
-                this.composer.setSize(w, h);
-                if (this.fisheyePass) {
-                    this.fisheyePass.uniforms.resolution.value.set(w * pr, h * pr);
-                }
+                this.composer.setSize(w, h); // Keep composed pass sized correctly
+
+                // Update Dome Camera Aspect
+                this.domeCamera.aspect = w / h;
+                this.domeCamera.updateProjectionMatrix();
             }
 
             // 2. Preview Canvas (Director)
@@ -1362,8 +1367,12 @@ class Planetarium {
             this.sun.material.uniforms.time.value = t;
         }
 
-        // 1. Render for Dome (Mirror Preview View)
-        this.renderer.render(this.scene, this.previewCamera);
+        // Sync Dome Camera to Preview Camera (Mirror Position/Rotation)
+        this.domeCamera.position.copy(this.previewCamera.position);
+        this.domeCamera.rotation.copy(this.previewCamera.rotation);
+
+        // 1. Render for Dome (using its own aspect ratio but mirrored view)
+        this.renderer.render(this.scene, this.domeCamera);
 
         // 2. Render for Director Menu (Preview Monitor)
         this.previewRenderer.render(this.scene, this.previewCamera);
