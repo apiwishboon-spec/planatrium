@@ -19,18 +19,50 @@
     overflow: hidden;
 }
 
-body.program-mode #director-dashboard {
+/* Program Mode - Clean Output for Dome */
+html.program-mode .dashboard-sidebar,
+html.program-mode .dashboard-header,
+html.program-mode .script-panel,
+html.program-mode .monitor-label,
+html.program-mode .monitor-frame:not(.program) {
     display: none !important;
 }
 
-body.program-mode #main-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
+html.program-mode #director-dashboard {
+    display: block !important;
+    grid-template-columns: 1fr !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: #000 !important;
+}
+
+html.program-mode .dashboard-main {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    grid-template-rows: 1fr !important;
+}
+
+html.program-mode .visuals-grid {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    grid-template-columns: 1fr !important;
+}
+
+html.program-mode .monitor-frame.program {
+    border: none !important;
     width: 100vw !important;
     height: 100vh !important;
-    z-index: 9999;
-    background: black;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+html.program-mode #main-canvas {
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: cover;
 }
 
 /* Sidebar */

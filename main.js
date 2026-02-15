@@ -438,7 +438,6 @@ class Planetarium {
         this.isProgram = new URLSearchParams(window.location.search).get('mode') === 'program';
 
         if (this.isProgram) {
-            document.body.classList.add('program-mode');
             this.sound.setVolume(0); // Only master plays audio
         }
 
