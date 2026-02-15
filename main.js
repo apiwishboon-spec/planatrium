@@ -454,12 +454,51 @@ class Planetarium {
         this.channel.onmessage = (e) => {
             const data = e.data;
             if (this.isProgram) {
-                if (data.type === 'start') this.start(data.startTime);
+                // Program receiving commands
+                if (data.type === 'start') this.start(performance.now());
+                if (data.type === 'sync_state') {
+                    console.log("Received Sync State:", data);
+                    this.currentSceneIndex = data.sceneIndex;
+                    if (data.isActive) {
+                        this.isActive = true;
+                        // Calculate local start time based on received elapsed time
+                        this.startTime = performance.now() - (data.elapsedTime * 1000);
+
+                        // Force fade out welcome overlay if active
+                        const welcomeOverlay = document.getElementById('welcome-overlay');
+                        if (welcomeOverlay) {
+                            welcomeOverlay.classList.add('hidden');
+                            welcomeOverlay.style.display = 'none';
+                        }
+                    } else {
+                        // If director is paused/stopped, reflect that
+                        this.isActive = false;
+                    }
+                }
                 if (data.type === 'jump') this.jumpToScene(data.index);
                 if (data.type === 'pause') this.togglePause(true);
                 if (data.type === 'resume') this.togglePause(false);
+            } else {
+                // Director receiving requests
+                if (data.type === 'request_sync') {
+                    console.log("Sending Sync State to Program Window");
+                    const currentElapsed = (performance.now() - this.startTime) / 1000;
+                    this.channel.postMessage({
+                        type: 'sync_state',
+                        isActive: this.isActive,
+                        elapsedTime: this.isActive ? currentElapsed : 0,
+                        sceneIndex: this.currentSceneIndex
+                    });
+                }
             }
         };
+
+        // If I am Program, request sync immediately on load
+        if (this.isProgram) {
+            setTimeout(() => {
+                this.channel.postMessage({ type: 'request_sync' });
+            }, 500); // Small delay to ensure Director is listening
+        }
 
         console.log(`Planetarium ${this.isProgram ? 'PROGRAM' : 'DIRECTOR'}: ONLINE`);
 
