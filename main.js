@@ -373,7 +373,17 @@ class Planetarium {
         this.isActive = false;
         this.currentSceneIndex = 0;
 
-        // Audio System (Surround/Spatial)
+        // Audio System (Optimized for 5.1 Surround Sound)
+        const audioContext = THREE.AudioContext.getContext();
+        if (audioContext.destination.maxChannelCount >= 6) {
+            audioContext.destination.channelCount = 6;
+            audioContext.destination.channelCountMode = 'explicit';
+            audioContext.destination.channelInterpretation = 'speakers';
+            console.log("5.1 Surround Sound hardware detected and enabled.");
+        } else {
+            console.warn("Hardware does not support 6 channels. Falling back to stereo.");
+        }
+
         this.listener = new THREE.AudioListener();
         this.cubeCamera.add(this.listener);
         this.sound = new THREE.Audio(this.listener);
@@ -852,6 +862,9 @@ class Planetarium {
             const planetAudio = new THREE.PositionalAudio(this.listener);
             planetAudio.setRefDistance(100);
             planetAudio.setRolloffFactor(2);
+            if (planetAudio.panner) {
+                planetAudio.panner.panningModel = 'equalpower';
+            }
             planetMesh.add(planetAudio);
 
             const orbitGroup = new THREE.Group();
