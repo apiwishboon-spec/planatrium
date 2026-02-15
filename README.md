@@ -1,40 +1,28 @@
-# 🌌 Cosmic Journey: Cinema-Grade Planetarium
+# Sirindhorn Planetarium - Cosmic Journey
+## Full-Dome Hardware Optimized
 
-A high-fidelity, shader-driven 3D planetarium experience built with Three.js. This project is specifically optimized for 180° hemispherical dome projection, featuring "IMAX Film Grade" visuals and cinematic camera direction.
+This project is a cinema-grade planetarium welcome and visual sequence, specifically engineered for the **Sirindhorn Planetarium** hardware ecosystem.
 
-## ✨ Cinematic Features
+### 🏛 Hardware Specifications (Target Host)
+- **Projector**: Domedia Pro (Professional Grade)
+- **Resolution**: 1920 x 1200 (16:10 Native)
+- **Brightness**: 10,000 Lumens
+- **Contrast Ratio**: 10,000:1 (High Dynamic Range)
+- **Audio System**: 5.1 Discrete Surround Sound array
+- **Storage**: Hybrid SSD/HDD Professional Storage
 
-- **Movie-Grade Post-Processing**: Includes barrel distortion, anamorphic lens flares, chromatic aberration, and high-frequency film grain for a 70mm film aesthetic.
-- **Procedural Solar Engine**: A custom roiling surface shader for the Sun, featuring volumetric light rays and diffractive lens spikes.
-- **Atmospheric Planetary Physics**: Planets are rendered using a custom Fresnel-Atmosphere shader with real-time procedural surface detailing.
-- **Deep-Field Star Simulation**: Over 60,000+ stars across 4 distinct depth layers, creating an immense sense of space and parallax.
-- **Kinetic Camera Direction**: Handheld-style 3D camera jitter and non-linear spline movement for an organic, cinematic feel.
-- **Volumetric Nebulae**: Noise-driven smoky nebulae layers that drift and swirl as the observer moves through space.
+### 🚀 Software Optimizations
+- **4K Internal Rendering**: Internal 4096px Cube Mapping for ultra-sharp supersampling at 1920x1200.
+- **Spatial Surround Sound**: Native Web Audio API implementation with 6-channel output (5.1).
+- **Fisheye Projection**: Real-time shader-based 180° hemispherical mapping.
+- **Cinematic Bloom**: High-lumen optimized glow shaders (2.5x strength).
 
-## 🚀 Quick Start
-
-### Recommended (Modern Web Workflow)
-1. Open your terminal in this folder.
-2. Run `npm install`
-3. Run `npm run dev`
-4. Open the provided URL.
-
-### Simple (Python Server)
-1. Run `python3 -m http.server 8000`
-2. Visit `http://localhost:8000` in your browser.
-
-## 🛠 Project Structure
-- `index.html`: Main UI and Full-Dome constraint.
-- `main.js`: Three.js engine, starry scenes, and timeline.
-- `styles.css`: Visual styling and animations.
-## 🛠 Technical Stack
-- **Engine**: Three.js (WebGL 2.0)
-- **Shaders**: GLSL (Custom Vertex & Fragment Shaders)
-- **Post-Processing**: EffectComposer (UnrealBloom, ShaderPass)
-- **UI/Layout**: Modern CSS3 (Glassmorphism + Backdrop Filter)
-
-## 🎥 Projection Note
-This application is designed with a **180° Fisheye Constraint**. The rendering is oriented "Upward" relative to the horizon, making it a drop-in solution for digital dome planetariums.
+### 🛠 Installation & Usage
+1. Ensure `music.mp3` and `welcome.png` are in the root directory.
+2. Run via a local web server (required for CORS and Audio functionality).
+3. Open in a modern browser (Chrome/Edge recommended for 5.1 support).
+4. Click the **Fullscreen** button in the bottom-right for full-dome immersion.
+5. Click anywhere on the splash screen to start the 2:41 cinematic sequence.
 
 ---
-*Created for the Sirindhorn Planetarium.*
+*Developed for Sirindhorn Planetarium - Modernizing the Cosmic Experience.*
