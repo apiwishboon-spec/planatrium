@@ -92,11 +92,13 @@ const StarShader = {
         attribute float offset;
         varying vec3 vColor;
         varying float vOffset;
+        varying float vSize;
         void main() {
             vColor = color;
             vOffset = offset;
+            vSize = size;
             vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = size * (300.0 / -mvPosition.z);
+            gl_PointSize = size * (400.0 / -mvPosition.z);
             gl_Position = projectionMatrix * mvPosition;
         }
     `,
@@ -105,18 +107,28 @@ const StarShader = {
         uniform float opacity;
         varying vec3 vColor;
         varying float vOffset;
+        varying float vSize;
         void main() {
-            float r = length(gl_PointCoord - 0.5);
+            vec2 cxy = gl_PointCoord - 0.5;
+            float r = length(cxy);
             if (r > 0.5) discard;
             
-            // Soft glow
-            float glow = 1.0 - (r * 2.0);
-            glow = pow(glow, 2.0);
+            // Core Glow
+            float glow = exp(-r * 6.0);
             
             // Twinkle
-            float twinkle = 0.8 + 0.2 * sin(time * 3.0 + vOffset);
+            float twinkle = 0.8 + 0.3 * sin(time * 2.5 + vOffset);
             
-            gl_FragColor = vec4(vColor * glow * twinkle * opacity, glow * opacity);
+            // Diffraction Spikes for bright stars
+            float spikes = 0.0;
+            if (vSize > 8.0) {
+                float beam1 = smoothstep(0.01, 0.0, abs(cxy.x) * abs(cxy.y) * 100.0);
+                float beam2 = smoothstep(0.01, 0.0, abs(cxy.x - cxy.y) * abs(cxy.x + cxy.y) * 100.0);
+                spikes = (beam1 + beam2) * 0.4 * glow;
+            }
+            
+            vec3 finalColor = vColor * (glow + spikes) * twinkle * opacity;
+            gl_FragColor = vec4(finalColor, glow * opacity);
         }
     `
 };
@@ -125,8 +137,8 @@ const CinematicShader = {
     uniforms: {
         'tDiffuse': { value: null },
         'time': { value: 0 },
-        'amount': { value: 0.003 }, // Reduced grain
-        'chromaticAberration': { value: 0.001 } // Reduced blur
+        'amount': { value: 0.004 },
+        'chromaticAberration': { value: 0.0015 }
     },
     vertexShader: `
         varying vec2 vUv;
@@ -147,10 +159,17 @@ const CinematicShader = {
         }
 
         void main() {
+            vec2 uv = vUv;
+            
+            // Barrel Distortion
+            vec2 distUv = (uv - 0.5) * 2.0;
+            distUv *= 1.0 + 0.02 * dot(distUv, distUv);
+            vec2 finalUv = distUv * 0.5 + 0.5;
+
             // Chromatic Aberration
-            vec2 rUv = vUv + vec2(chromaticAberration, 0.0);
-            vec2 gUv = vUv;
-            vec2 bUv = vUv - vec2(chromaticAberration, 0.0);
+            vec2 rUv = finalUv + vec2(chromaticAberration, 0.0);
+            vec2 gUv = finalUv;
+            vec2 bUv = finalUv - vec2(chromaticAberration, 0.0);
 
             vec4 rCol = texture2D(tDiffuse, rUv);
             vec4 gCol = texture2D(tDiffuse, gUv);
@@ -159,14 +178,64 @@ const CinematicShader = {
             vec4 color = vec4(rCol.r, gCol.g, bCol.b, gCol.a);
 
             // Film Grain
-            float grain = (random(vUv + time) - 0.5) * amount;
+            float grain = (random(finalUv + time) - 0.5) * amount;
             color.rgb += grain;
 
-            // Subtle IMAX contrast shift (Lift/Gamma/Gain approximation)
-            color.rgb = pow(color.rgb, vec3(1.15)); // Slightly more contrast
-            color.rgb *= 1.15; // Slightly more gain
+            // Vignette
+            float vignette = smoothstep(1.5, 0.5, length(distUv));
+            color.rgb *= vignette;
 
+            // IMAX color grade
+            color.rgb = pow(color.rgb, vec3(1.2)); // Push blacks
+            color.rgb *= vec3(1.0, 1.02, 1.05); // Cool space shadows
+            
             gl_FragColor = color;
+        }
+    `
+};
+
+const SolarShader = {
+    uniforms: {
+        'time': { value: 0 },
+        'color': { value: new THREE.Color(0xfff5cc) }
+    },
+    vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        void main() {
+            vUv = uv;
+            vNormal = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: `
+        uniform float time;
+        uniform vec3 color;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+
+        float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        }
+
+        float noise(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            f = f * f * (3.0 - 2.0 * f);
+            return mix(mix(hash(i + vec2(0,0)), hash(i + vec2(1,0)), u.x),
+                               mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x), u.y);
+        }
+
+        void main() {
+            vec2 p = vUv * 8.0;
+            float n = noise(p + time * 0.5);
+            n += 0.5 * noise(p * 2.0 - time * 0.3);
+            
+            vec3 fireColor = mix(vec3(1.0, 0.4, 0.0), vec3(1.0, 0.9, 0.2), n);
+            float rim = 1.0 - max(dot(vec3(0,0,1), vNormal), 0.0);
+            rim = pow(rim, 3.0);
+            
+            gl_FragColor = vec4(mix(color, fireColor, n) + rim * 0.5, 1.0);
         }
     `
 };
@@ -175,8 +244,11 @@ const PlanetShader = {
     vertexShader: `
         varying vec3 vNormal;
         varying vec3 vViewPosition;
+        varying vec3 vWorldPosition;
         void main() {
             vNormal = normalize(normalMatrix * normal);
+            vec4 worldPos = modelMatrix * vec4(position, 1.0);
+            vWorldPosition = worldPos.xyz;
             vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
             vViewPosition = -mvPosition.xyz;
             gl_Position = projectionMatrix * mvPosition;
@@ -185,21 +257,51 @@ const PlanetShader = {
     fragmentShader: `
         uniform vec3 color;
         uniform vec3 sunDirection;
+        uniform float time;
         varying vec3 vNormal;
         varying vec3 vViewPosition;
+        varying vec3 vWorldPosition;
+
+        // Simple Hash
+        float hash(vec3 p) {
+            p = fract(p * 0.1031);
+            p += dot(p, p.yzx + 33.33);
+            return fract((p.x + p.y) * p.z);
+        }
+
+        // Noise function for surface detail
+        float noise(vec3 x) {
+            vec3 p = floor(x);
+            vec3 f = fract(x);
+            f = f * f * (3.0 - 2.0 * f);
+            return mix(mix(mix(hash(p + vec3(0, 0, 0)), hash(p + vec3(1, 0, 0)), f.x),
+                           mix(hash(p + vec3(0, 1, 0)), hash(p + vec3(1, 1, 0)), f.x), f.y),
+                       mix(mix(hash(p + vec3(0, 0, 1)), hash(p + vec3(1, 0, 1)), f.x),
+                           mix(hash(p + vec3(0, 1, 1)), hash(p + vec3(1, 1, 1)), f.x), f.y), f.z);
+        }
+
         void main() {
             vec3 normal = normalize(vNormal);
             vec3 viewDir = normalize(vViewPosition);
             
+            // Procedural Surface Detail (FBM-like)
+            float n = noise(vWorldPosition * 0.1);
+            n += 0.5 * noise(vWorldPosition * 0.2);
+            n += 0.25 * noise(vWorldPosition * 0.4);
+            
             // Diffuse lighting from sun
             float dotNL = max(dot(normal, normalize(sunDirection)), 0.0);
             
-            // Atmospheric rim light
-            float rim = 1.0 - max(dot(viewDir, normal), 0.0);
-            rim = pow(rim, 4.0);
+            // Shadows with surface grit
+            float darkness = smoothstep(-0.2, 0.4, dotNL);
             
-            vec3 finalColor = color * (dotNL * 0.8 + 0.2); // Base + Ambient
-            finalColor += color * rim * 0.5; // Rim glow
+            // Atmospheric rim light (Soft Movie Glow)
+            float rim = 1.0 - max(dot(viewDir, normal), 0.0);
+            rim = pow(rim, 6.0);
+            
+            vec3 planetColor = color * (n * 0.5 + 0.8);
+            vec3 finalColor = planetColor * (darkness * 0.9 + 0.1);
+            finalColor += color * rim * 1.2; // Stronger cinematic rim
             
             gl_FragColor = vec4(finalColor, 1.0);
         }
@@ -266,10 +368,10 @@ class Planetarium {
         this.fisheyePass.uniforms['tCube'].value = this.cubeCamera.renderTarget.texture;
         this.composer.addPass(this.fisheyePass);
 
-        // Stronger bloom for those bright celestial bodies
+        // Cinematic Bloom (Lower threshold, higher radius)
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            2.5, 0.4, 0.85
+            1.8, 1.0, 0.1 // Strength, Radius, Threshold
         );
         this.composer.addPass(this.bloomPass);
 
@@ -352,6 +454,7 @@ class Planetarium {
         const positions = [];
         const colors = [];
         const sizes = [];
+        const rotationOffsets = [];
 
         const nebulaColors = [
             new THREE.Color(0x220044), // Deep Purple
@@ -360,8 +463,8 @@ class Planetarium {
             new THREE.Color(0x002222)  // Deep Cyan
         ];
 
-        for (let i = 0; i < 120; i++) {
-            const r = 3000 + Math.random() * 4000;
+        for (let i = 0; i < 200; i++) { // Increase nebula resolution
+            const r = 3000 + Math.random() * 5000;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
 
@@ -373,12 +476,14 @@ class Planetarium {
 
             const col = nebulaColors[Math.floor(Math.random() * nebulaColors.length)];
             colors.push(col.r, col.g, col.b);
-            sizes.push(3000 + Math.random() * 4000);
+            sizes.push(4000 + Math.random() * 5000);
+            rotationOffsets.push(Math.random() * 100);
         }
 
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
         geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+        geometry.setAttribute('rotOffset', new THREE.Float32BufferAttribute(rotationOffsets, 1));
 
         const material = new THREE.ShaderMaterial({
             uniforms: {
@@ -388,22 +493,49 @@ class Planetarium {
             vertexShader: `
                 attribute float size;
                 attribute vec3 color;
+                attribute float rotOffset;
                 varying vec3 vColor;
+                varying float vRot;
                 void main() {
                     vColor = color;
+                    vRot = rotOffset;
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                    gl_PointSize = size * (1000.0 / -mvPosition.z);
+                    gl_PointSize = size * (1200.0 / -mvPosition.z);
                     gl_Position = projectionMatrix * mvPosition;
                 }
             `,
             fragmentShader: `
+                uniform float time;
+                uniform float opacity;
                 varying vec3 vColor;
+                varying float vRot;
+
+                float hash(vec2 p) {
+                    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+                }
+
+                float noise(vec2 p) {
+                    vec2 i = floor(p);
+                    vec2 f = fract(p);
+                    vec2 u = f*f*(3.0-2.0*f);
+                    return mix(mix(hash(i + vec2(0,0)), hash(i + vec2(1,0)), u.x),
+                               mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x), u.y);
+                }
+
                 void main() {
-                    float r = length(gl_PointCoord - 0.5);
+                    vec2 uv = gl_PointCoord - 0.5;
+                    float r = length(uv);
                     if (r > 0.5) discard;
+                    
+                    // Filmy Noise Texture
+                    float n = noise(uv * 10.0 + time * 0.1 + vRot);
+                    n += 0.5 * noise(uv * 20.0 - time * 0.05);
+                    
                     float glow = 1.0 - (r * 2.0);
-                    glow = pow(glow, 4.0);
-                    gl_FragColor = vec4(vColor * glow, glow * 0.5);
+                    glow = pow(glow, 5.0);
+                    
+                    vec3 finalCol = vColor * (n * 0.4 + 0.6) * glow;
+                    gl_FragColor = vec4(finalCol * opacity, glow * opacity * n);
                 }
             `,
             transparent: true,
@@ -581,23 +713,24 @@ class Planetarium {
         this.scene.add(this.solarSystemGroup);
 
         // --- SUN ---
-        // Core
+        // Core with Solar Shader
         const sunGeom = new THREE.SphereGeometry(120, 64, 64);
-        const sunMat = new THREE.MeshBasicMaterial({
-            color: 0xfff5cc,
-            transparent: true,
-            opacity: 1.0
+        const sunMat = new THREE.ShaderMaterial({
+            uniforms: THREE.UniformsUtils.clone(SolarShader.uniforms),
+            vertexShader: SolarShader.vertexShader,
+            fragmentShader: SolarShader.fragmentShader
         });
         this.sun = new THREE.Mesh(sunGeom, sunMat);
         this.solarSystemGroup.add(this.sun);
 
-        // Inner Glow
-        const innerGlowGeom = new THREE.SphereGeometry(140, 64, 64);
+        // Inner Glow (Soft Corona)
+        const innerGlowGeom = new THREE.SphereGeometry(150, 64, 64);
         const innerGlowMat = new THREE.MeshBasicMaterial({
-            color: 0xffaa00,
+            color: 0xff4411,
             transparent: true,
-            opacity: 0.6,
-            side: THREE.BackSide
+            opacity: 0.4,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending
         });
         this.sun.add(new THREE.Mesh(innerGlowGeom, innerGlowMat));
 
@@ -634,7 +767,8 @@ class Planetarium {
             const mat = new THREE.ShaderMaterial({
                 uniforms: {
                     color: { value: new THREE.Color(cfg.color) },
-                    sunDirection: { value: new THREE.Vector3(0, 0, 0) } // Updated in animate
+                    sunDirection: { value: new THREE.Vector3(0, 0, 0) }, // Updated in animate
+                    time: { value: 0 }
                 },
                 vertexShader: PlanetShader.vertexShader,
                 fragmentShader: PlanetShader.fragmentShader
@@ -681,8 +815,6 @@ class Planetarium {
             this.solarSystemGroup.add(orbitGroup);
         });
 
-        // --- PLANETS ---
-        // ... (rest of the planet logic)
 
         // --- VOLUMETRIC RAYS (3D EFFECT) ---
         for (let i = 0; i < 15; i++) {
@@ -796,6 +928,10 @@ class Planetarium {
             });
         };
 
+        // Smooth transition easing for camera paths
+        const easeInOut = (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        const eProgress = easeInOut(progress);
+
         switch (index) {
             case 0: // Void
                 setStarOpacity(0);
@@ -808,46 +944,53 @@ class Planetarium {
             case 1: // Deep Space Build
                 setStarOpacity(0.4 + progress * 0.6);
                 this.nebulae.material.uniforms.opacity.value = progress * 0.5;
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * 10;
+                // Move from Deep Space to Milky Way on a curve
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (10 + progress * 20);
+                this.cubeCamera.rotation.z += 0.0001;
                 break;
             case 2: // Milky Way
-                this.milkyWay.material.uniforms.opacity.value = progress * 1.2;
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * 15;
+                this.milkyWay.material.uniforms.opacity.value = progress * 1.5;
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (30 - progress * 10);
+                this.cubeCamera.position.x = Math.sin(progress * Math.PI) * 100;
                 break;
             case 3: // Solar System
                 this.solarSystemGroup.visible = true;
-                const solarDist = THREE.MathUtils.lerp(3000, 1000, progress);
+                const solarDist = THREE.MathUtils.lerp(4000, 800, eProgress);
                 this.solarSystemGroup.position.set(0, solarDist, 0);
                 this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * 5;
                 break;
             case 4: // Zoom Out
-                this.solarSystemGroup.position.y = THREE.MathUtils.lerp(1000, 10000, progress);
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * 20;
+                this.solarSystemGroup.position.y = THREE.MathUtils.lerp(800, 15000, eProgress);
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (20 + progress * 40);
+                this.cubeCamera.rotation.z += 0.0005;
                 break;
             case 5: // Cosmic Scale
-                this.milkyWay.material.uniforms.opacity.value = 1.0 - progress * 0.3;
-                this.nebulae.material.uniforms.opacity.value = 0.5 + progress * 0.3;
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * 30;
+                this.milkyWay.material.uniforms.opacity.value = 1.0 - progress * 0.5;
+                this.nebulae.material.uniforms.opacity.value = 0.5 + progress * 0.4;
+                this.cubeCamera.position.y += Math.pow(progress, 2.0) * 500;
                 break;
             case 6: // Final Sky
-                setStarOpacity(1 - progress * 0.5);
+                setStarOpacity(1.2 - progress * 0.6);
                 this.cubeCamera.rotation.y += CONFIG.rotationSpeed * 0.1;
-                // Narration script removed as requested
                 break;
         }
 
-        // Global drift/rotation
-        this.cubeCamera.rotation.y += CONFIG.rotationSpeed;
-        this.cubeCamera.rotation.x += CONFIG.rotationSpeed * 0.5;
+        // Global drift
+        this.cubeCamera.rotation.y += CONFIG.rotationSpeed * 0.5;
+        this.cubeCamera.rotation.x += CONFIG.rotationSpeed * 0.2;
 
-        // Planet orbits & Shader Lighting
+        // Cinematic Camera Jitter (Heavy Handheld Feel)
+        const t = performance.now() * 0.001;
+        this.cubeCamera.rotation.x += Math.sin(t * 0.8) * 0.002;
+        this.cubeCamera.rotation.z += Math.cos(t * 0.7) * 0.0015;
+
+        // Planet orbits & Shader Updates
         this.planets.forEach(p => {
             p.angle += p.speed;
             p.mesh.rotation.y = p.angle;
 
-            // Calculate sun direction for realistic shading
-            // The sun is at (0,0,0) in the solarSystemGroup.
-            // The planet is at some X distance, but we need the world vector.
+            p.planetBody.material.uniforms.time.value = t;
+
             const planetPos = new THREE.Vector3();
             p.planetBody.getWorldPosition(planetPos);
             const sunPos = new THREE.Vector3();
@@ -857,10 +1000,11 @@ class Planetarium {
             p.planetBody.material.uniforms.sunDirection.value.copy(dir);
         });
 
-        // Sun rays rotation
+        // Sun & Rays rotation
         if (this.sun) {
-            this.sun.rotation.y += 0.005;
-            this.sun.rotation.z += 0.003;
+            this.sun.rotation.y += 0.002;
+            this.sun.rotation.z += 0.001;
+            // Rays are children, so they'll rotate with sun
         }
     }
 
@@ -890,6 +1034,10 @@ class Planetarium {
 
         if (this.cinematicPass) {
             this.cinematicPass.uniforms.time.value = t;
+        }
+
+        if (this.sun && this.sun.material.uniforms) {
+            this.sun.material.uniforms.time.value = t;
         }
 
         // 1. Render scene to cube map
