@@ -11,13 +11,13 @@ const CONFIG = {
     cameraDriftSpeed: 0.003,
     rotationSpeed: 0.002,
     timeline: [
-        { name: 'Void', duration: 4 },
-        { name: 'Deep Space Build', duration: 25 },
-        { name: 'Milky Way', duration: 20 },
-        { name: 'Solar System', duration: 25 },
-        { name: 'Zoom Out', duration: 25 },
-        { name: 'Cosmic Scale', duration: 15 },
-        { name: 'Final Sky', duration: 6 }
+        { name: 'Emergence', duration: 10 },
+        { name: 'The Great Silence', duration: 35 },
+        { name: 'Celestial Structures', duration: 30 },
+        { name: 'Systems of Light', duration: 40 },
+        { name: 'Transcendence', duration: 30 },
+        { name: 'Infinite Scale', duration: 10 },
+        { name: 'Stardust Memory', duration: 6 }
     ]
 };
 
@@ -970,9 +970,9 @@ class Planetarium {
             cumulativeTime += scene.duration;
         }
 
-        if (!foundScene && this.elapsedTime > 120) {
-            // Reset or hold
-            this.handleSceneAnimation(6, 5);
+        if (!foundScene && this.elapsedTime > 161) {
+            // Infinite hold at the end
+            this.handleSceneAnimation(7, 5.9);
         }
     }
 
@@ -991,45 +991,44 @@ class Planetarium {
         const eProgress = easeInOut(progress);
 
         switch (index) {
-            case 0: // Void
+            case 0: // Emergence
                 setStarOpacity(0);
                 this.milkyWay.material.uniforms.opacity.value = 0;
                 this.nebulae.material.uniforms.opacity.value = 0;
-                if (sceneTime > 0.5) {
-                    setStarOpacity((sceneTime - 0.5) / 2 * 0.4);
+                if (sceneTime > 2.0) {
+                    setStarOpacity((sceneTime - 2.0) / 8.0 * 0.4);
                 }
                 break;
-            case 1: // Deep Space Build
+            case 1: // The Great Silence
                 setStarOpacity(0.4 + progress * 0.6);
-                this.nebulae.material.uniforms.opacity.value = progress * 0.5;
-                // Move from Deep Space to Milky Way on a curve
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (10 + progress * 20);
-                this.cubeCamera.rotation.z += 0.0001;
+                this.nebulae.material.uniforms.opacity.value = progress * 0.6;
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (5 + progress * 15);
+                this.cubeCamera.rotation.z += 0.00005;
                 break;
-            case 2: // Milky Way
-                this.milkyWay.material.uniforms.opacity.value = progress * 1.5;
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (30 - progress * 10);
-                this.cubeCamera.position.x = Math.sin(progress * Math.PI) * 100;
+            case 2: // Celestial Structures
+                this.milkyWay.material.uniforms.opacity.value = progress * 1.8;
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (25 - progress * 5);
+                this.cubeCamera.position.x = Math.sin(progress * Math.PI) * 150;
                 break;
-            case 3: // Solar System
+            case 3: // Systems of Light
                 this.solarSystemGroup.visible = true;
-                const solarDist = THREE.MathUtils.lerp(4000, 800, eProgress);
+                const solarDist = THREE.MathUtils.lerp(6000, 800, eProgress);
                 this.solarSystemGroup.position.set(0, solarDist, 0);
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * 5;
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * 3;
                 break;
-            case 4: // Zoom Out
-                this.solarSystemGroup.position.y = THREE.MathUtils.lerp(800, 15000, eProgress);
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (20 + progress * 40);
-                this.cubeCamera.rotation.z += 0.0005;
+            case 4: // Transcendence
+                this.solarSystemGroup.position.y = THREE.MathUtils.lerp(800, 20000, eProgress);
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (15 + progress * 35);
+                this.cubeCamera.rotation.z += 0.0003;
                 break;
-            case 5: // Cosmic Scale
-                this.milkyWay.material.uniforms.opacity.value = 1.0 - progress * 0.5;
-                this.nebulae.material.uniforms.opacity.value = 0.5 + progress * 0.4;
-                this.cubeCamera.position.y += Math.pow(progress, 2.0) * 500;
+            case 5: // Infinite Scale
+                this.milkyWay.material.uniforms.opacity.value = 1.0 - progress * 0.4;
+                this.nebulae.material.uniforms.opacity.value = 0.6 + progress * 0.4;
+                this.cubeCamera.position.y += Math.pow(progress, 2.5) * 800;
                 break;
-            case 6: // Final Sky
-                setStarOpacity(1.2 - progress * 0.6);
-                this.cubeCamera.rotation.y += CONFIG.rotationSpeed * 0.1;
+            case 6: // Stardust Memory
+                setStarOpacity(1.0 - progress * 0.5);
+                this.cubeCamera.rotation.y += CONFIG.rotationSpeed * 0.05;
                 break;
         }
 
