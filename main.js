@@ -382,9 +382,8 @@ class Planetarium {
         this.init();
         this.addEventListeners();
 
-        // Initial render to show welcome dome
-        this.cubeCamera.update(this.renderer, this.scene);
-        this.composer.render();
+        // Start loop immediately to show welcome dome
+        requestAnimationFrame((t) => this.animate(t));
     }
 
     setupPostProcessing() {
@@ -1016,8 +1015,6 @@ class Planetarium {
         if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => { });
         }
-
-        requestAnimationFrame((t) => this.animate(t));
     }
 
     updateTimeline(time) {
@@ -1137,15 +1134,15 @@ class Planetarium {
     }
 
     animate(time) {
-        if (!this.isActive || !time) {
-            if (this.isActive) requestAnimationFrame(this.animate.bind(this));
-            return;
-        }
         requestAnimationFrame(this.animate.bind(this));
+        if (!time) return;
 
         const t = time * 0.001;
-        this.updateTimeline(time);
-        this.updateShootingStars(time);
+
+        if (this.isActive) {
+            this.updateTimeline(time);
+            this.updateShootingStars(time);
+        }
 
         // Update shaders
         this.starLayers.forEach(layer => {
