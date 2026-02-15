@@ -393,7 +393,7 @@ class Planetarium {
         this.audioLoader.load('music.mp3', (buffer) => {
             this.sound.setBuffer(buffer);
             this.sound.setLoop(true);
-            this.sound.setVolume(0.0);
+            this.sound.setVolume(0.4);
         });
 
         // Welcome Dome Group
@@ -950,20 +950,31 @@ class Planetarium {
         });
 
         document.getElementById('fullscreen-btn').addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
+            this.toggleFullscreen();
         });
 
         document.getElementById('start-button').addEventListener('click', () => {
             this.start();
         });
+    }
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            this.enterFullscreen();
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
+        }
+    }
+
+    enterFullscreen() {
+        const doc = document.documentElement;
+        if (doc.requestFullscreen) doc.requestFullscreen();
+        else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
+        else if (doc.mozRequestFullScreen) doc.mozRequestFullScreen();
+        else if (doc.msRequestFullscreen) doc.msRequestFullscreen();
     }
 
     start() {
@@ -977,16 +988,15 @@ class Planetarium {
 
         document.getElementById('scene-info').classList.remove('hidden');
 
+        // Force Fullscreen on start for dome immersion
+        this.enterFullscreen();
+
         // Enable cinematic bloom now that the text is gone
         if (this.bloomPass) this.bloomPass.enabled = true;
 
         // Play Spatial Audio
         if (this.sound.buffer) {
             this.sound.play();
-        }
-
-        if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().catch(() => { });
         }
 
         requestAnimationFrame((t) => this.animate(t));
@@ -1035,24 +1045,6 @@ class Planetarium {
         // Cinematic Swoosh & Zoom Dynamics
         const swooshProgress = Math.pow(progress, 3.0); // Extreme acceleration at end of scenes
         const rotationSwoosh = Math.sin(progress * Math.PI) * 0.02;
-
-        // Dynamic Volume Logic (Cinematic Envelope)
-        let targetVolume = 0.4;
-        switch (index) {
-            case 0: targetVolume = progress * 0.4; break; // Fade in
-            case 1: targetVolume = 0.4 - (progress * 0.1); break; // Soft atmosphere
-            case 2: targetVolume = 0.3 + (progress * 0.2); break; // Building up
-            case 3: targetVolume = 0.5 + (progress * 0.1); break; // Active exploration
-            case 4: targetVolume = 0.6 + (swooshProgress * 0.3); break; // Climax boost
-            case 5: targetVolume = 0.8 - (progress * 0.4); break; // Post-climax fade
-            case 6: targetVolume = 0.4 * (1.0 - progress); break; // Final fade out
-        }
-
-        // Smooth Volume Interpolation
-        if (this.sound) {
-            const currentVol = this.sound.getVolume();
-            this.sound.setVolume(currentVol + (targetVolume - currentVol) * 0.05);
-        }
 
         switch (index) {
             case 0: // Emergence
