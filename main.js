@@ -32,7 +32,7 @@ const FisheyeShader = {
         varying vec2 vUv;
         void main() {
             vUv = uv;
-            gl_Position = vec4(position, 1.0);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
     `,
     fragmentShader: `
@@ -98,7 +98,7 @@ const StarShader = {
             vOffset = offset;
             vSize = size;
             vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = size * (400.0 / -mvPosition.z);
+            gl_PointSize = size * (400.0 / max(-mvPosition.z, 1.0));
             gl_Position = projectionMatrix * mvPosition;
         }
     `,
@@ -114,7 +114,7 @@ const StarShader = {
             if (r > 0.5) discard;
             
             // Core Glow
-            float glow = exp(-r * 6.0);
+            float glow = exp(-r * 8.0);
             
             // Twinkle
             float twinkle = 0.8 + 0.3 * sin(time * 2.5 + vOffset);
@@ -161,15 +161,10 @@ const CinematicShader = {
         void main() {
             vec2 uv = vUv;
             
-            // Barrel Distortion
-            vec2 distUv = (uv - 0.5) * 2.0;
-            distUv *= 1.0 + 0.02 * dot(distUv, distUv);
-            vec2 finalUv = distUv * 0.5 + 0.5;
-
-            // Chromatic Aberration
-            vec2 rUv = finalUv + vec2(chromaticAberration, 0.0);
-            vec2 gUv = finalUv;
-            vec2 bUv = finalUv - vec2(chromaticAberration, 0.0);
+            // Subtle Chromatic Aberration
+            vec2 rUv = uv + vec2(chromaticAberration, 0.0);
+            vec2 gUv = uv;
+            vec2 bUv = uv - vec2(chromaticAberration, 0.0);
 
             vec4 rCol = texture2D(tDiffuse, rUv);
             vec4 gCol = texture2D(tDiffuse, gUv);
@@ -178,18 +173,19 @@ const CinematicShader = {
             vec4 color = vec4(rCol.r, gCol.g, bCol.b, gCol.a);
 
             // Film Grain
-            float grain = (random(finalUv + time) - 0.5) * amount;
+            float grain = (random(uv + time) - 0.5) * amount;
             color.rgb += grain;
 
             // Vignette
-            float vignette = smoothstep(1.5, 0.5, length(distUv));
+            float dist = length(uv - 0.5);
+            float vignette = smoothstep(0.8, 0.4, dist);
             color.rgb *= vignette;
 
             // IMAX color grade
-            color.rgb = pow(color.rgb, vec3(1.2)); // Push blacks
-            color.rgb *= vec3(1.0, 1.02, 1.05); // Cool space shadows
+            color.rgb = pow(clamp(color.rgb, 0.0, 1.0), vec3(1.1)); 
+            color.rgb *= vec3(1.0, 1.01, 1.02);
             
-            gl_FragColor = color;
+            gl_FragColor = vec4(color.rgb, 1.0);
         }
     `
 };
@@ -227,12 +223,13 @@ const SolarShader = {
         }
 
         void main() {
+            vec3 normal = normalize(vNormal);
             vec2 p = vUv * 8.0;
             float n = noise(p + time * 0.5);
             n += 0.5 * noise(p * 2.0 - time * 0.3);
             
             vec3 fireColor = mix(vec3(1.0, 0.4, 0.0), vec3(1.0, 0.9, 0.2), n);
-            float rim = 1.0 - max(dot(vec3(0,0,1), vNormal), 0.0);
+            float rim = 1.0 - max(dot(vec3(0,0,1), normal), 0.0);
             rim = pow(rim, 3.0);
             
             gl_FragColor = vec4(mix(color, fireColor, n) + rim * 0.5, 1.0);
@@ -368,10 +365,10 @@ class Planetarium {
         this.fisheyePass.uniforms['tCube'].value = this.cubeCamera.renderTarget.texture;
         this.composer.addPass(this.fisheyePass);
 
-        // Cinematic Bloom (Lower threshold, higher radius)
+        // Cinematic Bloom (Safe settings)
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.8, 1.0, 0.1 // Strength, Radius, Threshold
+            1.5, 0.4, 0.2 // Strength, Radius, Threshold
         );
         this.composer.addPass(this.bloomPass);
 
@@ -867,8 +864,13 @@ class Planetarium {
 
     addEventListeners() {
         window.addEventListener('resize', () => {
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
-            this.composer.setSize(window.innerWidth, window.innerHeight);
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            this.renderer.setSize(w, h);
+            this.composer.setSize(w, h);
+            if (this.fisheyePass) {
+                this.fisheyePass.uniforms.resolution.value.set(w, h);
+            }
         });
 
         document.getElementById('start-button').addEventListener('click', () => {
