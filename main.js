@@ -397,10 +397,10 @@ class Planetarium {
         this.fisheyePass.uniforms['tCube'].value = this.cubeCamera.renderTarget.texture;
         this.composer.addPass(this.fisheyePass);
 
-        // Cinematic Bloom (Safe settings)
+        // Cinematic Bloom (More conservative to keep text legible)
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.5, 0.4, 0.2 // Strength, Radius, Threshold
+            1.2, 0.4, 0.3 // Reduced strength, higher threshold
         );
         this.composer.addPass(this.bloomPass);
 
@@ -430,54 +430,59 @@ class Planetarium {
         // Draw background (transparent)
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // SAC Logo placeholder (circle with S)
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(512, 200, 80, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 80px Outfit';
-        ctx.textAlign = 'center';
-        ctx.fillText('SAC+', 512, 230);
-
-        // Rocket drawing (Simplified)
-        ctx.save();
-        ctx.translate(200, 400);
-        ctx.rotate(-Math.PI * 0.15);
-        ctx.fillStyle = '#ff4444';
-        ctx.beginPath();
-        ctx.moveTo(0, -100);
-        ctx.lineTo(40, 0);
-        ctx.lineTo(-40, 0);
-        ctx.fill();
-        ctx.fillRect(-20, 0, 40, 100);
-        ctx.restore();
-
-        // Saturn drawing (Simplified)
-        ctx.save();
-        ctx.translate(824, 400);
-        ctx.fillStyle = '#ffaa44';
-        ctx.beginPath();
-        ctx.arc(0, 0, 60, 0, Math.PI * 2);
-        ctx.fill();
+        // SAC Logo
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 10;
         ctx.beginPath();
-        ctx.ellipse(0, 0, 100, 30, Math.PI * 0.15, 0, Math.PI * 2);
+        ctx.arc(512, 250, 120, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 100px Outfit';
+        ctx.textAlign = 'center';
+        ctx.fillText('SAC+', 512, 285);
+
+        // Rocket drawing (Larger & Clearer)
+        ctx.save();
+        ctx.translate(220, 500);
+        ctx.rotate(-Math.PI * 0.15);
+        ctx.fillStyle = '#ff3333';
+        ctx.beginPath();
+        ctx.moveTo(0, -150);
+        ctx.lineTo(60, 0);
+        ctx.lineTo(-60, 0);
+        ctx.fill();
+        ctx.fillRect(-30, 0, 60, 140);
+        ctx.restore();
+
+        // Saturn drawing (Larger & Clearer)
+        ctx.save();
+        ctx.translate(804, 500);
+        ctx.fillStyle = '#ffaa33';
+        ctx.beginPath();
+        ctx.arc(0, 0, 90, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+        ctx.lineWidth = 15;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 160, 40, Math.PI * 0.15, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
 
-        // Welcome Text
-        ctx.fillStyle = '#fff';
-        ctx.font = '300 40px Outfit';
-        ctx.fillText('WELCOME TO', 512, 580);
+        // Welcome Text (Much larger)
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '300 45px Outfit';
+        ctx.fillText('WELCOME TO', 512, 650);
 
-        ctx.font = 'bold 70px Outfit';
-        ctx.letterSpacing = "5px";
-        ctx.fillText('SIRINDHORN PLANETARIUM', 512, 670);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 85px Outfit';
+        ctx.letterSpacing = "8px";
+        ctx.fillText('SIRINDHORN PLANETARIUM', 512, 760);
 
         const texture = new THREE.CanvasTexture(canvas);
+        texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+        texture.magFilter = THREE.LinearFilter;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+
         const mat = new THREE.ShaderMaterial({
             uniforms: {
                 tDiffuse: { value: texture },
@@ -489,12 +494,12 @@ class Planetarium {
             side: THREE.DoubleSide
         });
 
-        // Place at dome zenith (looking down)
-        const geom = new THREE.PlaneGeometry(800, 800);
+        // Zenith placement
+        const geom = new THREE.PlaneGeometry(1000, 1000);
         this.welcomeMesh = new THREE.Mesh(geom, mat);
-        this.welcomeMesh.position.set(0, 900, 0);
+        this.welcomeMesh.position.set(0, 950, 0);
         this.welcomeMesh.rotation.x = Math.PI * 0.5;
-        this.welcomeMesh.rotation.z = Math.PI; // Correct orientation
+        this.welcomeMesh.rotation.z = Math.PI;
         this.welcomeGroup.add(this.welcomeMesh);
     }
 
