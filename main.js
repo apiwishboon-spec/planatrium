@@ -393,7 +393,7 @@ class Planetarium {
         this.audioLoader.load('music.mp3', (buffer) => {
             this.sound.setBuffer(buffer);
             this.sound.setLoop(true);
-            this.sound.setVolume(0.8);
+            this.sound.setVolume(0.4);
         });
 
         // Welcome Dome Group
