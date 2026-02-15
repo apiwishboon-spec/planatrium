@@ -344,6 +344,8 @@ class Planetarium {
         });
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.setSize(width, height);
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
         // Preview Monitor Renderer
         this.previewRenderer = new THREE.WebGLRenderer({
@@ -352,6 +354,8 @@ class Planetarium {
         });
         this.previewRenderer.setPixelRatio(1);
         this.previewRenderer.setSize(width, height); // Mirror initial size
+        this.previewRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.previewRenderer.outputColorSpace = THREE.SRGBColorSpace;
 
         // Scenes
         this.scene = new THREE.Scene();
@@ -429,7 +433,26 @@ class Planetarium {
         // One-time manual trigger to sync canvas sizes after layout
         window.dispatchEvent(new Event('resize'));
 
-        console.log("Planetarium Mission Control: ONLINE");
+        // Dual Window Sync System
+        this.channel = new BroadcastChannel('planetarium_sync');
+        this.isProgram = new URLSearchParams(window.location.search).get('mode') === 'program';
+
+        if (this.isProgram) {
+            document.body.classList.add('program-mode');
+            this.sound.setVolume(0); // Only master plays audio
+        }
+
+        this.channel.onmessage = (e) => {
+            const data = e.data;
+            if (this.isProgram) {
+                if (data.type === 'start') this.start(data.startTime);
+                if (data.type === 'jump') this.jumpToScene(data.index);
+                if (data.type === 'pause') this.togglePause(true);
+                if (data.type === 'resume') this.togglePause(false);
+            }
+        };
+
+        console.log(`Planetarium ${this.isProgram ? 'PROGRAM' : 'DIRECTOR'}: ONLINE`);
 
         // Start animation loop immediately
         requestAnimationFrame(this._animate);
@@ -1022,15 +1045,19 @@ class Planetarium {
         if (this.sound) this.sound.setVolume(parseFloat(volSlider.value));
     }
 
-    togglePause() {
-        if (this.sound.isPlaying) {
-            this.sound.pause();
+    togglePause(remote = false) {
+        if (this.isActive) {
+            if (this.sound.isPlaying) this.sound.pause();
             this.isActive = false;
-            document.getElementById('master-start-btn').innerText = "RESUME MISSION";
+            const btn = document.getElementById('master-start-btn');
+            if (btn) btn.innerText = "RESUME MISSION";
+            if (!remote && !this.isProgram) this.channel.postMessage({ type: 'pause' });
         } else {
-            this.sound.play();
+            if (!this.sound.isPlaying && !this.isProgram) this.sound.play();
             this.isActive = true;
-            document.getElementById('master-start-btn').innerText = "ABORT MISSION";
+            const btn = document.getElementById('master-start-btn');
+            if (btn) btn.innerText = "ABORT MISSION";
+            if (!remote && !this.isProgram) this.channel.postMessage({ type: 'resume' });
         }
     }
 
@@ -1053,11 +1080,15 @@ class Planetarium {
         else if (doc.msRequestFullscreen) doc.msRequestFullscreen();
     }
 
-    start() {
+    start(forcedStartTime = null) {
         if (this.isActive) return;
         console.log("Mission Engage: Sequence Initiated");
         this.isActive = true;
-        this.startTime = performance.now();
+        this.startTime = forcedStartTime || performance.now();
+
+        if (!this.isProgram && !forcedStartTime) {
+            this.channel.postMessage({ type: 'start', startTime: this.startTime });
+        }
 
         // Hide overlay if it exists
         const overlay = document.getElementById('welcome-image-container');
@@ -1065,14 +1096,14 @@ class Planetarium {
 
         document.getElementById('master-start-btn').innerText = "ABORT MISSION";
 
-        // Force Fullscreen on start for dome immersion
-        this.enterFullscreen();
+        // Force Fullscreen on start for dome immersion (only for Program window)
+        if (this.isProgram) this.enterFullscreen();
 
-        // Enable cinematic bloom now that the text is gone
+        // Enable cinematic bloom
         if (this.bloomPass) this.bloomPass.enabled = true;
 
-        // Play Spatial Audio
-        if (this.sound.buffer) {
+        // Play Spatial Audio (only if not a slave program)
+        if (this.sound.buffer && !this.isProgram) {
             this.sound.play();
         }
 
@@ -1247,20 +1278,28 @@ class Planetarium {
     }
 
     jumpToScene(index) {
-        if (!this.isActive) this.start();
-
         let cumulative = 0;
         for (let i = 0; i < index; i++) {
             cumulative += CONFIG.timeline[i].duration;
         }
 
         this.startTime = performance.now() - (cumulative * 1000);
+        this.currentSceneIndex = index;
+
+        if (!this.isProgram) {
+            this.channel.postMessage({ type: 'jump', index: index });
+        }
 
         // Sync audio if possible
-        if (this.sound && this.sound.isPlaying) {
-            this.sound.stop();
+        if (this.sound && this.sound.buffer && !this.isProgram) {
+            if (this.sound.isPlaying) this.sound.stop();
             this.sound.play(cumulative);
         }
+    }
+
+    launchProgramWindow() {
+        const url = window.location.origin + window.location.pathname + '?mode=program';
+        window.open(url, 'Planetarium_Program', 'width=1920,height=1080');
     }
 
     animate(time) {
@@ -1275,9 +1314,15 @@ class Planetarium {
             this.updateDashboard(time);
         }
 
-        // Sync Preview Camera to follow CubeCamera view
+        // Sync Preview Camera to follow CubeCamera
+        // To make preview and program "the same pic", we point the preview camera 
+        // towards the Zenith (+Y) or the Forward horizon (+Z) of the dome.
         this.previewCamera.position.copy(this.cubeCamera.position);
-        this.previewCamera.quaternion.copy(this.cubeCamera.quaternion);
+
+        // This alignment ensures the Perspective Director view looks exactly where 
+        // the dome center is pointed.
+        this.previewCamera.rotation.set(-Math.PI / 2, 0, 0); // Look at Zenith (+Y)
+        this.previewCamera.quaternion.multiplyQuaternions(this.cubeCamera.quaternion, this.previewCamera.quaternion);
 
         // Update shaders
         this.starLayers.forEach(layer => {

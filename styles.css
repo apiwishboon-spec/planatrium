@@ -19,6 +19,20 @@
     overflow: hidden;
 }
 
+body.program-mode #director-dashboard {
+    display: none !important;
+}
+
+body.program-mode #main-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999;
+    background: black;
+}
+
 /* Sidebar */
 .dashboard-sidebar {
     background: rgba(15, 15, 20, 0.95);
