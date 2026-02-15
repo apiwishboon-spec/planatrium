@@ -65,7 +65,8 @@ html.program-mode #main-canvas {
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    z-index: 200 !important;
+    z-index: 1 !important;
+    /* Lowered to allow overlays */
     object-fit: cover;
     background: black;
 }

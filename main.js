@@ -1362,9 +1362,8 @@ class Planetarium {
             this.sun.material.uniforms.time.value = t;
         }
 
-        // 1. Render for Dome (Fisheye Program)
-        this.cubeCamera.update(this.renderer, this.scene);
-        this.composer.render();
+        // 1. Render for Dome (Mirror Preview View)
+        this.renderer.render(this.scene, this.previewCamera);
 
         // 2. Render for Director Menu (Preview Monitor)
         this.previewRenderer.render(this.scene, this.previewCamera);
