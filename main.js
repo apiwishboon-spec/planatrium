@@ -373,6 +373,19 @@ class Planetarium {
         this.isActive = false;
         this.currentSceneIndex = 0;
 
+        // Audio System (Surround/Spatial)
+        this.listener = new THREE.AudioListener();
+        this.cubeCamera.add(this.listener);
+        this.sound = new THREE.Audio(this.listener);
+        this.audioLoader = new THREE.AudioLoader();
+
+        // Load background music
+        this.audioLoader.load('music.mp3', (buffer) => {
+            this.sound.setBuffer(buffer);
+            this.sound.setLoop(true);
+            this.sound.setVolume(0.8);
+        });
+
         // Welcome Dome Group
         this.welcomeGroup = new THREE.Group();
         this.scene.add(this.welcomeGroup);
@@ -835,6 +848,12 @@ class Planetarium {
             });
             planetGroup.add(new THREE.Mesh(atmGeom, atmMat));
 
+            // --- Spatial Audio Anchor (Surround Swoosh Foundation) ---
+            const planetAudio = new THREE.PositionalAudio(this.listener);
+            planetAudio.setRefDistance(100);
+            planetAudio.setRolloffFactor(2);
+            planetMesh.add(planetAudio);
+
             const orbitGroup = new THREE.Group();
             orbitGroup.add(planetGroup);
             planetGroup.position.x = cfg.dist;
@@ -842,8 +861,10 @@ class Planetarium {
             this.planets.push({
                 mesh: orbitGroup,
                 planetBody: planetMesh,
-                speed: 0.003 / (i + 1),
-                angle: Math.random() * Math.PI * 2
+                audio: planetAudio,
+                dist: cfg.dist,
+                angle: Math.random() * Math.PI * 2,
+                speed: 0.005 / (cfg.dist / 500)
             });
             this.solarSystemGroup.add(orbitGroup);
         });
@@ -946,8 +967,10 @@ class Planetarium {
         // Enable cinematic bloom now that the text is gone
         if (this.bloomPass) this.bloomPass.enabled = true;
 
-        const audio = document.getElementById('bg-music');
-        audio.play().catch(e => console.error("Audio playback failed", e));
+        // Play Spatial Audio
+        if (this.sound.buffer) {
+            this.sound.play();
+        }
 
         if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch(() => { });
