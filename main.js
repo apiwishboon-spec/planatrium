@@ -43,10 +43,14 @@ const FisheyeShader = {
 
         void main() {
             vec2 uv = (vUv - 0.5) * 2.0;
-            float aspect = resolution.x / max(resolution.y, 1.0);
+            float aspect = resolution.x / resolution.y;
             
-            if (aspect > 1.0) uv.x *= aspect;
-            else uv.y /= max(aspect, 0.1);
+            // Fix aspect ratio distortion - Ensure perfect circle fits shorter dimension
+            if (aspect > 1.0) {
+                uv.x *= aspect;
+            } else {
+                uv.y /= aspect;
+            }
             
             float r = length(uv);
             if (r > 1.0) {
@@ -464,10 +468,11 @@ class Planetarium {
             side: THREE.DoubleSide
         });
 
-        const geom = new THREE.PlaneGeometry(1200, 1200);
+        const geom = new THREE.PlaneGeometry(2000, 2000); // Larger to ensure full coverage
         this.welcomeMesh = new THREE.Mesh(geom, mat);
-        this.welcomeMesh.position.set(0, 500, 0);
+        this.welcomeMesh.position.set(0, 800, 0); // Position at dome apex
         this.welcomeMesh.rotation.x = -Math.PI * 0.5;
+        this.welcomeMesh.rotation.z = Math.PI; // Correct upside-down orientation
         this.welcomeGroup.add(this.welcomeMesh);
     }
 
