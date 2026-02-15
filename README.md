@@ -20,7 +20,7 @@ A high-fidelity, shader-driven 3D planetarium experience built with Three.js. Th
 - **Volumetric Nebulae**: Noise-driven smoky nebulae layers that drift and swirl as the observer moves through space.
 - **5.1 Spatial Surround**: Multi-channel audio mapping optimized for professional hemispherical sound arrays.
 
-### � Quick Start
+### Quick Start
 #### Recommended (Modern Web Workflow)
 1. Open your terminal in this folder.
 2. Run `npm install`
