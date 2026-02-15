@@ -42,17 +42,12 @@ const FisheyeShader = {
         const float PI = 3.14159265359;
 
         void main() {
-            vec2 uv = (vUv - 0.5) * 2.0;
+            vec2 uv = vUv - 0.5;
             float aspect = resolution.x / resolution.y;
+            uv.x *= aspect; // Correct x-axis to match physical scale of y-axis
+
+            float r = length(uv) * 2.0; // r=1.0 at screen edge (vertical)
             
-            // Fix aspect ratio distortion - Ensure perfect circle fits shorter dimension
-            if (aspect > 1.0) {
-                uv.x *= aspect;
-            } else {
-                uv.y /= aspect;
-            }
-            
-            float r = length(uv);
             if (r > 1.0) {
                 gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
                 return;
@@ -61,10 +56,11 @@ const FisheyeShader = {
             float theta = atan(uv.y, uv.x);
             float phi = r * PI * 0.5;
 
+            // Sample cube map - Correcting for dome view projection
             vec3 dir = vec3(
-                sin(phi) * cos(theta),
-                cos(phi),
-                sin(phi) * sin(theta)
+                sin(phi) * sin(theta), // X
+                cos(phi),              // Y (Zenith)
+                sin(phi) * cos(theta)  // Z
             );
             
             // Use textureCube for maximum compatibility
@@ -468,11 +464,11 @@ class Planetarium {
             side: THREE.DoubleSide
         });
 
-        const geom = new THREE.PlaneGeometry(2000, 2000); // Larger to ensure full coverage
+        const geom = new THREE.PlaneGeometry(2500, 2500);
         this.welcomeMesh = new THREE.Mesh(geom, mat);
-        this.welcomeMesh.position.set(0, 800, 0); // Position at dome apex
+        this.welcomeMesh.position.set(0, 1000, 0);
         this.welcomeMesh.rotation.x = -Math.PI * 0.5;
-        this.welcomeMesh.rotation.z = Math.PI; // Correct upside-down orientation
+        this.welcomeMesh.rotation.z = 0; // Reset to default
         this.welcomeGroup.add(this.welcomeMesh);
     }
 
