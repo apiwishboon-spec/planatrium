@@ -905,7 +905,20 @@ class Planetarium {
         });
 
         document.getElementById('welcome-image-container').addEventListener('click', () => {
+            console.log("Welcome clicked");
             this.start();
+        });
+
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
         });
 
         document.getElementById('start-button').addEventListener('click', () => {

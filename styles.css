@@ -46,7 +46,6 @@ html {
     pointer-events: auto;
     transition: opacity 1s ease-in-out, transform 1s ease-in-out;
     margin-top: 60vh;
-    /* Push button down from dome center */
 }
 
 #welcome-screen.hidden {
@@ -55,10 +54,7 @@ html {
     pointer-events: none;
 }
 
-.title {
-    display: none;
-}
-
+.title,
 .subtitle {
     display: none;
 }
@@ -75,6 +71,7 @@ html {
     z-index: 5;
     cursor: pointer;
     background: black;
+    pointer-events: auto;
 }
 
 #static-welcome-img {
@@ -86,12 +83,6 @@ html {
 
 #start-button {
     display: none;
-}
-
-#start-button:hover {
-    background: white;
-    color: black;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
 
 .hint {
@@ -163,4 +154,34 @@ html {
     font-style: italic;
     line-height: 1.6;
     font-weight: 200;
+}
+
+#fullscreen-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+}
+
+#fullscreen-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+#fullscreen-btn svg {
+    width: 28px;
+    height: 28px;
+    fill: white;
 }
