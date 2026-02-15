@@ -19,4 +19,3 @@ If you have Python installed:
 - `index.html`: Main UI and Full-Dome constraint.
 - `main.js`: Three.js engine, starry scenes, and timeline.
 - `styles.css`: Visual styling and animations.
-# planatrium
