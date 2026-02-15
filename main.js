@@ -1318,13 +1318,8 @@ class Planetarium {
             this.updateDashboard(time);
         }
 
-        // Sync Preview Camera to follow CubeCamera
-        // To make preview and program "the same pic", we point the preview camera 
-        // towards the Zenith (+Y) or the Forward horizon (+Z) of the dome.
+        // Sync Preview Camera to follow CubeCamera position
         this.previewCamera.position.copy(this.cubeCamera.position);
-
-        // This alignment ensures the Perspective Director view looks exactly where 
-        // the dome center is pointed.
         this.previewCamera.rotation.set(-Math.PI / 2, 0, 0); // Look at Zenith (+Y)
         this.previewCamera.quaternion.multiplyQuaternions(this.cubeCamera.quaternion, this.previewCamera.quaternion);
 
@@ -1349,14 +1344,12 @@ class Planetarium {
             this.sun.material.uniforms.time.value = t;
         }
 
-        // 1. Render for Dome (Fisheye Program)
-        this.cubeCamera.update(this.renderer, this.scene);
-        this.composer.render();
-
-        // 2. Render for Director Menu (Preview Monitor)
+        // Render BOTH canvases with the same perspective view
+        // The HTML circular mask will handle the dome cropping on the Program output
+        this.renderer.render(this.scene, this.previewCamera);
         this.previewRenderer.render(this.scene, this.previewCamera);
 
-        // 3. Audio Meter Update (Director Only)
+        // Audio Meter Update (Director Only)
         if (!this.isProgram && this.analyser && this.sound.isPlaying) {
             this.analyser.getByteFrequencyData(this.dataArray);
 
