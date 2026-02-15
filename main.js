@@ -6,10 +6,11 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 // --- CONFIGURATION ---
 const CONFIG = {
-    starCount: 60000, // Significant increase
-    nebulaCount: 40,
-    cameraDriftSpeed: 0.003,
-    rotationSpeed: 0.002,
+    starCount: 100000, // Even more stars
+    nebulaCount: 60,
+    cameraDriftSpeed: 0.005,
+    rotationSpeed: 0.004,
+    swooshFactor: 0.0,
     timeline: [
         { name: 'Emergence', duration: 10 },
         { name: 'The Great Silence', duration: 35 },
@@ -389,10 +390,9 @@ class Planetarium {
 
         // ... bloom ...
 
-        // Cinematic Bloom (Disabled until START)
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.5, 0.4, 0.85 // Normal strength for later
+            2.5, 0.5, 0.4 // Much stronger bloom for starlight glow
         );
         this.bloomPass.enabled = false;
         this.composer.addPass(this.bloomPass);
@@ -422,10 +422,10 @@ class Planetarium {
     createStarField() {
         this.starLayers = [];
         const layerConfigs = [
-            { count: CONFIG.starCount * 0.3, size: 14.0, spread: 1200, color: 0xffffff }, // Near
-            { count: CONFIG.starCount * 0.6, size: 7.0, spread: 2500, color: 0xccccff },  // Mid
-            { count: CONFIG.starCount * 1.5, size: 4.0, spread: 5000, color: 0xaaaaff },  // Far
-            { count: CONFIG.starCount * 3.0, size: 2.0, spread: 10000, color: 0x6666ff }  // Deep Field
+            { count: CONFIG.starCount * 0.3, size: 25.0, spread: 1500, color: 0xffffff }, // Near & Bright
+            { count: CONFIG.starCount * 0.7, size: 12.0, spread: 3500, color: 0xccccff },  // Mid
+            { count: CONFIG.starCount * 1.5, size: 6.0, spread: 6000, color: 0xaaaaff },  // Far
+            { count: CONFIG.starCount * 3.0, size: 3.5, spread: 12000, color: 0x8888ff }  // Deep Field
         ];
 
         layerConfigs.forEach(cfg => {
@@ -990,56 +990,74 @@ class Planetarium {
         const easeInOut = (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
         const eProgress = easeInOut(progress);
 
+        // Cinematic Swoosh & Zoom Dynamics
+        const swooshProgress = Math.pow(progress, 3.0); // Extreme acceleration at end of scenes
+        const rotationSwoosh = Math.sin(progress * Math.PI) * 0.02;
+
         switch (index) {
             case 0: // Emergence
                 setStarOpacity(0);
                 this.milkyWay.material.uniforms.opacity.value = 0;
                 this.nebulae.material.uniforms.opacity.value = 0;
                 if (sceneTime > 2.0) {
-                    setStarOpacity((sceneTime - 2.0) / 8.0 * 0.4);
+                    setStarOpacity((sceneTime - 2.0) / 8.0 * 0.6);
                 }
+                this.cubeCamera.position.y += Math.sin(t * 0.2) * 5; // Slow float
                 break;
             case 1: // The Great Silence
-                setStarOpacity(0.4 + progress * 0.6);
-                this.nebulae.material.uniforms.opacity.value = progress * 0.6;
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (5 + progress * 15);
-                this.cubeCamera.rotation.z += 0.00005;
+                setStarOpacity(0.6 + progress * 0.4);
+                this.nebulae.material.uniforms.opacity.value = progress * 0.7;
+                // Accelerating drift (Swoosh build-up)
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (10 + swooshProgress * 100);
+                this.cubeCamera.rotation.z += 0.0001 + rotationSwoosh;
                 break;
             case 2: // Celestial Structures
-                this.milkyWay.material.uniforms.opacity.value = progress * 1.8;
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (25 - progress * 5);
-                this.cubeCamera.position.x = Math.sin(progress * Math.PI) * 150;
+                this.milkyWay.material.uniforms.opacity.value = progress * 2.5;
+                // Majestic orbiting swoop
+                const radius = 200 + progress * 300;
+                this.cubeCamera.position.x = Math.sin(progress * Math.PI) * radius;
+                this.cubeCamera.position.z = Math.cos(progress * Math.PI) * radius;
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * 40;
+                this.cubeCamera.rotation.y += 0.002;
                 break;
             case 3: // Systems of Light
                 this.solarSystemGroup.visible = true;
-                const solarDist = THREE.MathUtils.lerp(6000, 800, eProgress);
+                const solarDist = THREE.MathUtils.lerp(8000, 700, eProgress);
                 this.solarSystemGroup.position.set(0, solarDist, 0);
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * 3;
+                // Rapid descent swoop
+                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (10 + eProgress * 50);
+                this.cubeCamera.rotation.x += Math.sin(progress * 5.0) * 0.005;
                 break;
             case 4: // Transcendence
-                this.solarSystemGroup.position.y = THREE.MathUtils.lerp(800, 20000, eProgress);
-                this.cubeCamera.position.y += CONFIG.cameraDriftSpeed * (15 + progress * 35);
-                this.cubeCamera.rotation.z += 0.0003;
+                this.solarSystemGroup.position.y = THREE.MathUtils.lerp(700, 30000, eProgress);
+                // The big warp swoop
+                const warpSpeed = CONFIG.cameraDriftSpeed * (20 + swooshProgress * 500);
+                this.cubeCamera.position.y += warpSpeed;
+                this.cubeCamera.rotation.z += 0.001 + swooshProgress * 0.05;
+                this.cubeCamera.rotation.x += rotationSwoosh;
                 break;
             case 5: // Infinite Scale
-                this.milkyWay.material.uniforms.opacity.value = 1.0 - progress * 0.4;
-                this.nebulae.material.uniforms.opacity.value = 0.6 + progress * 0.4;
-                this.cubeCamera.position.y += Math.pow(progress, 2.5) * 800;
+                this.milkyWay.material.uniforms.opacity.value = 1.0 - progress * 0.5;
+                this.nebulae.material.uniforms.opacity.value = 0.7 + progress * 0.3;
+                // High-altitude slow-motion drift
+                this.cubeCamera.position.y += Math.pow(progress, 3.0) * 2000;
+                this.cubeCamera.rotation.y += 0.001;
                 break;
             case 6: // Stardust Memory
-                setStarOpacity(1.0 - progress * 0.5);
-                this.cubeCamera.rotation.y += CONFIG.rotationSpeed * 0.05;
+                setStarOpacity(1.0 - progress * 0.7);
+                this.cubeCamera.rotation.y += CONFIG.rotationSpeed * 0.02;
+                this.cubeCamera.position.y += 50;
                 break;
         }
 
-        // Global drift
-        this.cubeCamera.rotation.y += CONFIG.rotationSpeed * 0.5;
-        this.cubeCamera.rotation.x += CONFIG.rotationSpeed * 0.2;
+        // Global IMAX Camera Drift (Heavy & Cinematic)
+        this.cubeCamera.rotation.y += CONFIG.rotationSpeed * 0.6;
+        this.cubeCamera.rotation.x += CONFIG.rotationSpeed * 0.3;
 
-        // Cinematic Camera Jitter (Heavy Handheld Feel)
-        const t = performance.now() * 0.001;
-        this.cubeCamera.rotation.x += Math.sin(t * 0.8) * 0.002;
-        this.cubeCamera.rotation.z += Math.cos(t * 0.7) * 0.0015;
+        // Dynamic 3D Rotation (Handheld Swoosh Jitter)
+        this.cubeCamera.rotation.x += Math.sin(t * 1.2) * 0.003;
+        this.cubeCamera.rotation.z += Math.cos(t * 1.1) * 0.002;
+        this.cubeCamera.rotation.y += Math.sin(t * 0.5) * 0.001;
 
         // Planet orbits & Shader Updates
         this.planets.forEach(p => {
