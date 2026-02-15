@@ -23,12 +23,10 @@ A high-fidelity, shader-driven 3D planetarium experience built with Three.js. Th
 1. Run `python3 -m http.server 8000`
 2. Visit `http://localhost:8000` in your browser.
 
-<<<<<<< HEAD
 ## 🛠 Project Structure
 - `index.html`: Main UI and Full-Dome constraint.
 - `main.js`: Three.js engine, starry scenes, and timeline.
 - `styles.css`: Visual styling and animations.
-=======
 ## 🛠 Technical Stack
 - **Engine**: Three.js (WebGL 2.0)
 - **Shaders**: GLSL (Custom Vertex & Fragment Shaders)
@@ -40,4 +38,3 @@ This application is designed with a **180° Fisheye Constraint**. The rendering 
 
 ---
 *Created for the Sirindhorn Planetarium.*
->>>>>>> 56fc17a (Total Movie-Grade Overhaul: Procedural shaders, volumetric sun, cinematic camera jitter, and IMAX post-processing)

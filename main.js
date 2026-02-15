@@ -412,94 +412,62 @@ class Planetarium {
     }
 
     createWelcomeDome() {
+        const textureLoader = new THREE.TextureLoader();
+
+        // Load the AI-generated high-fidelity image
+        textureLoader.load('welcome.png', (texture) => {
+            console.log("Welcome artwork loaded successfully.");
+            texture.anisotropy = 16;
+            this.welcomeMesh.material.map = texture;
+            this.welcomeMesh.material.needsUpdate = true;
+        }, undefined, (err) => {
+            console.warn("welcome.png not found, using procedural fallback.");
+        });
+
         const canvas = document.createElement('canvas');
         canvas.width = 1024;
         canvas.height = 1024;
         const ctx = canvas.getContext('2d');
 
-        // Draw background (transparent)
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Procedural Fallback (Cosmic Theme)
+        const gradient = ctx.createRadialGradient(512, 512, 0, 512, 512, 512);
+        gradient.addColorStop(0, '#110022');
+        gradient.addColorStop(1, '#000000');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Drawing colors from reference
-        const pinkRed = '#ff6b6b';
-        const saturnOrange = '#ffad5a';
-        const textWhite = 'rgba(255,255,255,0.95)';
-
-        // SAC Logo (Top)
-        ctx.strokeStyle = textWhite;
-        ctx.lineWidth = 6;
+        // SAC Logo
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(512, 180, 110, 0, Math.PI * 2);
+        ctx.arc(512, 280, 130, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.fillStyle = textWhite;
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 90px Outfit';
         ctx.textAlign = 'center';
-        ctx.fillText('SAC+', 512, 215);
+        ctx.fillText('SAC+', 512, 310);
 
-        // Rocket drawing (Left, tilted slightly)
-        ctx.save();
-        ctx.translate(250, 480);
-        ctx.rotate(-Math.PI * 0.1);
-        ctx.fillStyle = pinkRed;
-        ctx.beginPath();
-        ctx.moveTo(0, -180);
-        ctx.quadraticCurveTo(80, 0, 80, 150);
-        ctx.lineTo(-80, 150);
-        ctx.quadraticCurveTo(-80, 0, 0, -180);
-        ctx.fill();
-        // Rocket fins
-        ctx.beginPath();
-        ctx.moveTo(-80, 100);
-        ctx.lineTo(-120, 150);
-        ctx.lineTo(-80, 150);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(80, 100);
-        ctx.lineTo(120, 150);
-        ctx.lineTo(80, 150);
-        ctx.fill();
-        ctx.restore();
+        // Text
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '300 45px Outfit';
+        ctx.fillText('WELCOME TO', 512, 650);
 
-        // Saturn drawing (Right, with soft glow)
-        ctx.save();
-        ctx.translate(774, 480);
-        ctx.fillStyle = saturnOrange;
-        ctx.beginPath();
-        ctx.arc(0, 0, 110, 0, Math.PI * 2);
-        ctx.fill();
-        // Rings
-        ctx.strokeStyle = 'rgba(255,180,255,0.6)';
-        ctx.lineWidth = 20;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 200, 50, Math.PI * 0.15, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-
-        // Welcome Text (Centered)
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.font = '300 50px Outfit';
-        ctx.fillText('WELCOME TO', 512, 600);
-
-        ctx.fillStyle = textWhite;
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 85px Outfit';
         ctx.letterSpacing = "6px";
-        ctx.fillText('SIRINDHORN PLANETARIUM', 512, 710);
+        ctx.fillText('SIRINDHORN PLANETARIUM', 512, 760);
 
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.anisotropy = 16;
-
+        const proceduralTexture = new THREE.CanvasTexture(canvas);
         const mat = new THREE.MeshBasicMaterial({
-            map: texture,
+            map: proceduralTexture,
             transparent: true,
             side: THREE.DoubleSide
         });
 
-        // Zenith placement - Corrected orientation
         const geom = new THREE.PlaneGeometry(1200, 1200);
         this.welcomeMesh = new THREE.Mesh(geom, mat);
         this.welcomeMesh.position.set(0, 500, 0);
-        this.welcomeMesh.rotation.x = -Math.PI * 0.5; // Flip to face downward
-        this.welcomeMesh.rotation.z = 0; // Remove rotation correction
+        this.welcomeMesh.rotation.x = -Math.PI * 0.5;
         this.welcomeGroup.add(this.welcomeMesh);
     }
 
