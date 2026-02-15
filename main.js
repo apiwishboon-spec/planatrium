@@ -1094,7 +1094,16 @@ class Planetarium {
             this.channel.postMessage({ type: 'start', startTime: this.startTime });
         }
 
-        // Hide overlay if it exists
+        // Fade out welcome overlay in Program output
+        const welcomeOverlay = document.getElementById('welcome-overlay');
+        if (welcomeOverlay) {
+            welcomeOverlay.classList.add('hidden');
+            setTimeout(() => {
+                welcomeOverlay.style.display = 'none';
+            }, 2000);
+        }
+
+        // Hide old overlay if it exists
         const overlay = document.getElementById('welcome-image-container');
         if (overlay) overlay.style.display = 'none';
 

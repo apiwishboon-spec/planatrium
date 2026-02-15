@@ -362,31 +362,33 @@ html.program-mode .monitor-label {
 }
 
 .script-line {
-    font-size: 1.5rem;
-    line-height: 2;
-    margin-bottom: 2.5rem;
-    color: rgba(255, 255, 255, 0.2);
+    font-size: 1.8rem;
+    line-height: 2.2;
+    margin-bottom: 3rem;
+    color: rgba(255, 255, 255, 0.25);
     transition: all 0.5s;
-    text-align: center;
+    text-align: left;
+    padding: 0 2rem;
 }
 
 .script-line.active {
     color: #fff;
-    transform: scale(1.05);
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    transform: scale(1.02);
+    text-shadow: 0 0 20px rgba(138, 43, 226, 0.4);
 }
 
 .thai-script {
     font-family: 'Outfit', sans-serif;
-    /* Fallback but Outfit works well with Thai too */
-    line-height: 1.8;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    padding-top: 1rem;
+    line-height: 2.4;
+    border-top: 2px solid rgba(138, 43, 226, 0.3);
+    padding-top: 2rem;
+    margin-top: 2rem;
 }
 
 .eng-script {
     font-style: italic;
-    opacity: 0.8;
+    opacity: 0.9;
+    font-size: 1.6rem;
 }
 
 * {
@@ -541,17 +543,17 @@ html {
 }
 
 #fullscreen-btn {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 60px;
-    height: 60px;
-    background: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     cursor: pointer;
-    z-index: 999;
+    z-index: 100;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -560,12 +562,38 @@ html {
 }
 
 #fullscreen-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(138, 43, 226, 0.5);
     transform: scale(1.1);
+    border-color: var(--accent-color);
 }
 
 #fullscreen-btn svg {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     fill: white;
+}
+
+.welcome-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    transition: opacity 2s ease;
+}
+
+.welcome-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.welcome-overlay img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
 }
