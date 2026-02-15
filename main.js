@@ -397,11 +397,12 @@ class Planetarium {
         this.fisheyePass.uniforms['tCube'].value = this.cubeCamera.renderTarget.texture;
         this.composer.addPass(this.fisheyePass);
 
-        // Cinematic Bloom (More conservative to keep text legible)
+        // Cinematic Bloom (Disabled until START)
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.2, 0.4, 0.3 // Reduced strength, higher threshold
+            1.5, 0.4, 0.85 // Normal strength for later
         );
+        this.bloomPass.enabled = false;
         this.composer.addPass(this.bloomPass);
 
         // Pass 4: Cinematic IMAX Grade (Grain + Chromatic Aberration)
@@ -479,25 +480,18 @@ class Planetarium {
         ctx.fillText('SIRINDHORN PLANETARIUM', 512, 760);
 
         const texture = new THREE.CanvasTexture(canvas);
-        texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-        texture.magFilter = THREE.LinearFilter;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.anisotropy = 16;
 
-        const mat = new THREE.ShaderMaterial({
-            uniforms: {
-                tDiffuse: { value: texture },
-                opacity: { value: 1.0 }
-            },
-            vertexShader: WelcomeShader.vertexShader,
-            fragmentShader: WelcomeShader.fragmentShader,
+        const mat = new THREE.MeshBasicMaterial({
+            map: texture,
             transparent: true,
-            side: THREE.DoubleSide
+            side: THREE.BackSide // Looking up from inside
         });
 
-        // Zenith placement
-        const geom = new THREE.PlaneGeometry(1000, 1000);
+        // Zenith placement - Moved MUCH closer for sharpness
+        const geom = new THREE.PlaneGeometry(1200, 1200);
         this.welcomeMesh = new THREE.Mesh(geom, mat);
-        this.welcomeMesh.position.set(0, 950, 0);
+        this.welcomeMesh.position.set(0, 500, 0); // Closer = sharper
         this.welcomeMesh.rotation.x = Math.PI * 0.5;
         this.welcomeMesh.rotation.z = Math.PI;
         this.welcomeGroup.add(this.welcomeMesh);
@@ -999,11 +993,14 @@ class Planetarium {
         document.getElementById('welcome-screen').classList.add('hidden');
         document.getElementById('scene-info').classList.remove('hidden');
 
+        // Enable cinematic bloom now that the text is gone
+        if (this.bloomPass) this.bloomPass.enabled = true;
+
         // Fade out welcome dome
         new Promise(resolve => {
             const fade = () => {
-                if (this.welcomeMesh.material.uniforms.opacity.value > 0) {
-                    this.welcomeMesh.material.uniforms.opacity.value -= 0.05;
+                if (this.welcomeMesh.material.opacity > 0) {
+                    this.welcomeMesh.material.opacity -= 0.05;
                     requestAnimationFrame(fade);
                 } else {
                     this.welcomeGroup.visible = false;
