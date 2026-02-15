@@ -1,0 +1,16 @@
+{
+    "name": "Cosmic Journey Director",
+    "short_name": "CosmicDir",
+    "description": "Professional Planetarium Control System",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "icons": [
+        {
+            "src": "welcome.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

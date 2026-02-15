@@ -9,37 +9,93 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
-</head>
-
-<body>
-    <noscript>
-        <div style="color: white; background: black; padding: 20px; text-align: center;">
-            JavaScript is required to run this experience.
-        </div>
-    </noscript>
-
-    <div id="protocol-warning"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; background: #ff4444; color: white; padding: 10px; text-align: center; z-index: 1000; font-size: 0.9rem;">
-        ⚠️ Local File Detected: Browser security (CORS) blocks modular JS on <b>file://</b>. Please run this via a local
-        server (e.g., Python or Live Server).
-    </div>
-
+    <link rel="manifest" href="manifest.json">
     <script>
-        if (window.location.protocol === 'file:') {
-            document.getElementById('protocol-warning').style.display = 'block';
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
         }
     </script>
-    <div id="welcome-image-container">
-        <img src="welcome.png" id="static-welcome-img" alt="Welcome">
+</head>
+
+<body class="director-mode">
+    <div id="director-dashboard">
+        <!-- Sidebar Controls -->
+        <aside class="dashboard-sidebar">
+            <div class="logo-area">
+                <span class="status-dot pulsing"></span>
+                <h1>MISSION CONTROL</h1>
+            </div>
+
+            <nav class="scene-nav">
+                <h3>SCENE SELECT</h3>
+                <button onclick="window.app.jumpToScene(0)">01. EMERGENCE</button>
+                <button onclick="window.app.jumpToScene(1)">02. SILENCE</button>
+                <button onclick="window.app.jumpToScene(2)">03. STRUCTURES</button>
+                <button onclick="window.app.jumpToScene(3)">04. SYSTEMS</button>
+                <button onclick="window.app.jumpToScene(4)">05. TRANSCEND</button>
+                <button onclick="window.app.jumpToScene(5)">06. INFINITY</button>
+            </nav>
+
+            <div class="fx-panel">
+                <h3>FX OVERRIDE</h3>
+                <button id="fx-aurora">COMET</button>
+                <button id="fx-supernova">SUPERNOVA</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <header class="dashboard-header">
+                <div class="timer-readout">
+                    <span class="label">ELAPSED TIME</span>
+                    <span id="time-display">00:00:00</span>
+                </div>
+                <div class="scene-readout">
+                    <span class="label">CURRENT SEQUENCE</span>
+                    <span id="current-scene-name">STANDBY</span>
+                </div>
+                <button id="master-start-btn">ENGAGE SEQUENCE</button>
+            </header>
+
+            <section class="visuals-grid">
+                <!-- Preview (Human View) -->
+                <div class="monitor-frame">
+                    <span class="monitor-label">PREVIEW (PERSPECTIVE)</span>
+                    <canvas id="preview-canvas"></canvas>
+                </div>
+
+                <!-- Dome Output (Projector) -->
+                <div class="monitor-frame program">
+                    <span class="monitor-label">PROGRAM (DOME OUTPUT)</span>
+                    <canvas id="main-canvas"></canvas>
+                </div>
+            </section>
+
+            <!-- Script Panel -->
+            <footer class="script-panel">
+                <div class="script-header">
+                    <span>DIRECTOR'S NARRATIVE SCRIPT</span>
+                    <span id="sync-indicator">SYNC: ACTIVE</span>
+                </div>
+                <div id="script-content" class="script-scroller">
+                    <!-- Script lines will be injected here -->
+                    <p class="script-line" data-start="0">"Welcome, students, to the Sirindhorn Planetarium. Today, we
+                        leave Earth behind..."</p>
+                    <p class="script-line" data-start="10">"We enter 'The Great Silence'. Notice how the light of the
+                        Milky Way begins to emerge..."</p>
+                    <p class="script-line" data-start="45">"Look up at the Celestial Structures. We are moving towards
+                        the galactic core."</p>
+                    <p class="script-line" data-start="75">"Entering the Solar System. Here are the systems of light we
+                        call home."</p>
+                    <p class="script-line" data-start="115">"Preparing for warp. Hold on as we transcend the limits of
+                        the galaxy."</p>
+                </div>
+            </footer>
+        </main>
     </div>
 
-    <div id="ui-container">
-        <div id="welcome-screen">
-            <button id="start-button">START EXPERIENCE</button>
-        </div>
-        <div id="scene-info" class="hidden">
-            <span id="scene-name"></span>
-        </div>
+    <div id="welcome-image-container">
+        <img src="welcome.png" id="static-welcome-img" alt="Welcome">
     </div>
 
     <button id="fullscreen-btn" title="Toggle Fullscreen">
@@ -47,10 +103,6 @@
             <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
         </svg>
     </button>
-
-
-
-    <canvas id="main-canvas"></canvas>
 
     <script type="importmap">
         {

@@ -336,14 +336,24 @@ class Planetarium {
             precision: 'highp',
             powerPreference: 'high-performance'
         });
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // High fidelity capping at 2x for performance
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+
+        // Preview Monitor Renderer
+        this.previewCanvas = document.getElementById('preview-canvas');
+        this.previewRenderer = new THREE.WebGLRenderer({
+            canvas: this.previewCanvas,
+            antialias: true
+        });
+        this.previewRenderer.setPixelRatio(1);
+        this.previewRenderer.setSize(this.previewCanvas.clientWidth, this.previewCanvas.clientHeight);
 
         // Scenes
         this.scene = new THREE.Scene();
         this.uiScene = new THREE.Scene();
 
-        // 4K Ultra-High Resolution Cube Mapping for the Dome
+        // Cameras
+        // 1. Dome Projection Camera (Rig)
         const cubeRes = 4096;
         this.cubeCamera = new THREE.CubeCamera(0.1, 30000, new THREE.WebGLCubeRenderTarget(cubeRes, {
             generateMipmaps: true,
@@ -355,23 +365,30 @@ class Planetarium {
         }));
         this.scene.add(this.cubeCamera);
 
+        // 2. Director Preview Camera (Standard Perspective)
+        this.previewCamera = new THREE.PerspectiveCamera(75, this.previewCanvas.clientWidth / this.previewCanvas.clientHeight, 0.1, 40000);
+        this.scene.add(this.previewCamera);
+
         this.finalCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
         // Post-processing
         this.setupPostProcessing();
 
-        // Scene content
+        // State & Timing
+        this.startTime = 0;
+        this.elapsedTime = 0;
+        this.isActive = false;
+        this.currentSceneIndex = 0;
+
+        // Visuals Setup
         this.stars = null;
         this.milkyWay = null;
         this.sun = null;
         this.planets = [];
         this.shootingStars = [];
 
-        // State
-        this.startTime = 0;
-        this.elapsedTime = 0;
-        this.isActive = false;
-        this.currentSceneIndex = 0;
+        // Global expose for dashboard buttons
+        window.app = this;
 
         // Audio System (Optimized for 5.1 Surround Sound)
         const audioContext = THREE.AudioContext.getContext();
@@ -953,7 +970,8 @@ class Planetarium {
             this.toggleFullscreen();
         });
 
-        document.getElementById('start-button').addEventListener('click', () => {
+        // Dashboard Buttons
+        document.getElementById('master-start-btn').addEventListener('click', () => {
             this.start();
         });
     }
@@ -978,15 +996,14 @@ class Planetarium {
     }
 
     start() {
+        if (this.isActive) return;
         this.isActive = true;
         this.startTime = performance.now();
-        document.getElementById('welcome-screen').classList.add('hidden');
+
         document.getElementById('welcome-image-container').style.opacity = '0';
         setTimeout(() => {
             document.getElementById('welcome-image-container').style.display = 'none';
         }, 1000);
-
-        document.getElementById('scene-info').classList.remove('hidden');
 
         // Force Fullscreen on start for dome immersion
         this.enterFullscreen();
@@ -1013,7 +1030,8 @@ class Planetarium {
             if (this.elapsedTime < cumulativeTime + scene.duration) {
                 if (this.currentSceneIndex !== i) {
                     this.currentSceneIndex = i;
-                    document.getElementById('scene-name').textContent = scene.name;
+                    const name = scene.name;
+                    document.getElementById('current-scene-name').textContent = name;
                 }
                 this.handleSceneAnimation(i, this.elapsedTime - cumulativeTime);
                 foundScene = true;
@@ -1135,9 +1153,51 @@ class Planetarium {
         }
     }
 
+    updateDashboard(time) {
+        const elapsed = (time - this.startTime) / 1000;
+        const mins = Math.floor(elapsed / 60);
+        const secs = Math.floor(elapsed % 60);
+        const ms = Math.floor((elapsed % 1) * 100);
+
+        document.getElementById('time-display').innerText =
+            `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}:${ms.toString().padStart(2, '0')}`;
+
+        // Sync Script Lines
+        const scriptLines = document.querySelectorAll('.script-line');
+        let currentLine = null;
+        scriptLines.forEach(line => {
+            const start = parseFloat(line.getAttribute('data-start'));
+            if (elapsed >= start) {
+                currentLine = line;
+            }
+        });
+
+        if (currentLine) {
+            scriptLines.forEach(l => l.classList.remove('active'));
+            currentLine.classList.add('active');
+            currentLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    jumpToScene(index) {
+        if (!this.isActive) this.start();
+
+        let cumulative = 0;
+        for (let i = 0; i < index; i++) {
+            cumulative += CONFIG.timeline[i].duration;
+        }
+
+        this.startTime = performance.now() - (cumulative * 1000);
+
+        // Sync audio if possible
+        if (this.sound && this.sound.isPlaying) {
+            this.sound.stop();
+            this.sound.play(cumulative);
+        }
+    }
+
     animate(time) {
         requestAnimationFrame(this.animate.bind(this));
-        if (!this.isActive && !this.welcomeGroup.visible) return; // Completely idle 
         if (!time) return;
 
         const t = time * 0.001;
@@ -1145,7 +1205,12 @@ class Planetarium {
         if (this.isActive) {
             this.updateTimeline(time);
             this.updateShootingStars(time);
+            this.updateDashboard(time);
         }
+
+        // Sync Preview Camera to follow CubeCamera view
+        this.previewCamera.position.copy(this.cubeCamera.position);
+        this.previewCamera.quaternion.copy(this.cubeCamera.quaternion);
 
         // Update shaders
         this.starLayers.forEach(layer => {
@@ -1168,11 +1233,12 @@ class Planetarium {
             this.sun.material.uniforms.time.value = t;
         }
 
-        // 1. Render scene to cube map
+        // 1. Render for Dome (Fisheye Program)
         this.cubeCamera.update(this.renderer, this.scene);
-
-        // 2. Composite the fisheye view
         this.composer.render();
+
+        // 2. Render for Director Menu (Preview Monitor)
+        this.previewRenderer.render(this.scene, this.previewCamera);
     }
 }
 

@@ -5,6 +5,215 @@
     --font-main: 'Outfit', sans-serif;
 }
 
+#director-dashboard {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    background: #050505;
+    color: #e0e0e0;
+    z-index: 20;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.dashboard-sidebar {
+    background: rgba(15, 15, 20, 0.95);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.logo-area h1 {
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: #00ff00;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ff00;
+}
+
+.pulsing {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.scene-nav,
+.fx-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.scene-nav h3,
+.fx-panel h3 {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 0.5rem;
+}
+
+.scene-nav button,
+.fx-panel button {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: #fff;
+    padding: 0.8rem;
+    text-align: left;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.scene-nav button:hover,
+.fx-panel button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-color);
+}
+
+/* Main Main */
+.dashboard-main {
+    display: grid;
+    grid-template-rows: 80px 1fr 200px;
+    padding: 1rem;
+    gap: 1rem;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0 2rem;
+}
+
+.label {
+    display: block;
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 0.2rem;
+}
+
+#time-display,
+#current-scene-name {
+    font-family: monospace;
+    font-size: 1.2rem;
+    color: var(--accent-color);
+}
+
+#master-start-btn {
+    background: var(--accent-color);
+    border: none;
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+#master-start-btn:hover {
+    filter: brightness(1.2);
+}
+
+/* Visuals Grid */
+.visuals-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.monitor-frame {
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.monitor-label {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.4rem 1rem;
+    font-size: 0.7rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.monitor-frame canvas {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain;
+}
+
+/* Script Panel */
+.script-panel {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.script-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.5rem 1.5rem;
+    font-size: 0.7rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.script-scroller {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.script-line {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.3);
+    transition: all 0.5s;
+}
+
+.script-line.active {
+    color: #fff;
+    transform: scale(1.02);
+    padding-left: 10px;
+    border-left: 3px solid var(--accent-color);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -68,7 +277,7 @@ html {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 5;
+    z-index: 100;
     cursor: pointer;
     background: black;
     pointer-events: auto;
