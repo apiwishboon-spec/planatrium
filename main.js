@@ -43,19 +43,12 @@ const FisheyeShader = {
 
         void main() {
             vec2 uv = (vUv - 0.5) * 2.0;
-            float aspect = resolution.x / resolution.y;
+            float aspect = resolution.x / max(resolution.y, 1.0);
             
-            if (aspect > 1.0) {
-                uv.x *= aspect;
-            } else {
-                uv.y /= aspect;
-            }
+            if (aspect > 1.0) uv.x *= aspect;
+            else uv.y /= max(aspect, 0.1);
             
             float r = length(uv);
-            
-            // Anti-aliasing for the circular edge
-            float alpha = 1.0 - smoothstep(0.995, 1.0, r);
-            
             if (r > 1.0) {
                 gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
                 return;
@@ -64,19 +57,17 @@ const FisheyeShader = {
             float theta = atan(uv.y, uv.x);
             float phi = r * PI * 0.5;
 
-            // Proper orientation for dome projection (looking up into the hemisphere)
             vec3 dir = vec3(
                 sin(phi) * cos(theta),
-                cos(phi), // Center of dome is up
+                cos(phi),
                 sin(phi) * sin(theta)
             );
             
+            // Use textureCube for maximum compatibility
             vec4 color = textureCube(tCube, dir);
             
-            // Exposure boost to make it "easy to see"
-            color.rgb *= 1.2;
-            
-            gl_FragColor = vec4(color.rgb * alpha, 1.0);
+            float edge = smoothstep(1.0, 0.98, r);
+            gl_FragColor = vec4(color.rgb * 1.5 * edge, 1.0);
         }
     `
 };
@@ -389,12 +380,11 @@ class Planetarium {
     setupPostProcessing() {
         this.composer = new EffectComposer(this.renderer);
 
-        const renderPass = new RenderPass(this.uiScene, this.finalCamera);
-        this.composer.addPass(renderPass);
-
         this.fisheyePass = new ShaderPass(FisheyeShader);
         this.fisheyePass.uniforms['tCube'].value = this.cubeCamera.renderTarget.texture;
         this.composer.addPass(this.fisheyePass);
+
+        // ... bloom ...
 
         // Cinematic Bloom (Disabled until START)
         this.bloomPass = new UnrealBloomPass(
