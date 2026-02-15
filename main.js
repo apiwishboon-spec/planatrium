@@ -485,7 +485,7 @@ class Planetarium {
         const mat = new THREE.MeshBasicMaterial({
             map: texture,
             transparent: true,
-            side: THREE.BackSide // Looking up from inside
+            side: THREE.DoubleSide
         });
 
         // Zenith placement - Moved MUCH closer for sharpness
