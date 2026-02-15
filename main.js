@@ -305,6 +305,30 @@ const PlanetShader = {
     `
 };
 
+const WelcomeShader = {
+    uniforms: {
+        'tDiffuse': { value: null },
+        'opacity': { value: 1.0 }
+    },
+    vertexShader: `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_Position = projectionMatrix * mvPosition;
+        }
+    `,
+    fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform float opacity;
+        varying vec2 vUv;
+        void main() {
+            vec4 tex = texture2D(tDiffuse, vUv);
+            gl_FragColor = vec4(tex.rgb, tex.a * opacity);
+        }
+    `
+};
+
 // --- APP CLASS ---
 class Planetarium {
     constructor() {
@@ -351,8 +375,16 @@ class Planetarium {
         this.isActive = false;
         this.currentSceneIndex = 0;
 
+        // Welcome Dome Group
+        this.welcomeGroup = new THREE.Group();
+        this.scene.add(this.welcomeGroup);
+
         this.init();
         this.addEventListeners();
+
+        // Initial render to show welcome dome
+        this.cubeCamera.update(this.renderer, this.scene);
+        this.composer.render();
     }
 
     setupPostProcessing() {
@@ -380,12 +412,90 @@ class Planetarium {
     }
 
     init() {
+        this.createWelcomeDome();
         this.createStarField();
         this.createNebulae();
         this.createMilkyWay();
         this.createSolarSystem();
         this.createMicroParticles();
         this.createShootingStarPool();
+    }
+
+    createWelcomeDome() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+
+        // Draw background (transparent)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // SAC Logo placeholder (circle with S)
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(512, 200, 80, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 80px Outfit';
+        ctx.textAlign = 'center';
+        ctx.fillText('SAC+', 512, 230);
+
+        // Rocket drawing (Simplified)
+        ctx.save();
+        ctx.translate(200, 400);
+        ctx.rotate(-Math.PI * 0.15);
+        ctx.fillStyle = '#ff4444';
+        ctx.beginPath();
+        ctx.moveTo(0, -100);
+        ctx.lineTo(40, 0);
+        ctx.lineTo(-40, 0);
+        ctx.fill();
+        ctx.fillRect(-20, 0, 40, 100);
+        ctx.restore();
+
+        // Saturn drawing (Simplified)
+        ctx.save();
+        ctx.translate(824, 400);
+        ctx.fillStyle = '#ffaa44';
+        ctx.beginPath();
+        ctx.arc(0, 0, 60, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 100, 30, Math.PI * 0.15, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // Welcome Text
+        ctx.fillStyle = '#fff';
+        ctx.font = '300 40px Outfit';
+        ctx.fillText('WELCOME TO', 512, 580);
+
+        ctx.font = 'bold 70px Outfit';
+        ctx.letterSpacing = "5px";
+        ctx.fillText('SIRINDHORN PLANETARIUM', 512, 670);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const mat = new THREE.ShaderMaterial({
+            uniforms: {
+                tDiffuse: { value: texture },
+                opacity: { value: 1.0 }
+            },
+            vertexShader: WelcomeShader.vertexShader,
+            fragmentShader: WelcomeShader.fragmentShader,
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+
+        // Place at dome zenith (looking down)
+        const geom = new THREE.PlaneGeometry(800, 800);
+        this.welcomeMesh = new THREE.Mesh(geom, mat);
+        this.welcomeMesh.position.set(0, 900, 0);
+        this.welcomeMesh.rotation.x = Math.PI * 0.5;
+        this.welcomeMesh.rotation.z = Math.PI; // Correct orientation
+        this.welcomeGroup.add(this.welcomeMesh);
     }
 
     createStarField() {
@@ -883,6 +993,20 @@ class Planetarium {
         this.startTime = performance.now();
         document.getElementById('welcome-screen').classList.add('hidden');
         document.getElementById('scene-info').classList.remove('hidden');
+
+        // Fade out welcome dome
+        new Promise(resolve => {
+            const fade = () => {
+                if (this.welcomeMesh.material.uniforms.opacity.value > 0) {
+                    this.welcomeMesh.material.uniforms.opacity.value -= 0.05;
+                    requestAnimationFrame(fade);
+                } else {
+                    this.welcomeGroup.visible = false;
+                    resolve();
+                }
+            };
+            fade();
+        });
 
         const audio = document.getElementById('bg-music');
         audio.play().catch(e => console.error("Audio playback failed", e));
