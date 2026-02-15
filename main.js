@@ -1371,6 +1371,20 @@ class Planetarium {
         this.domeCamera.position.copy(this.previewCamera.position);
         this.domeCamera.rotation.copy(this.previewCamera.rotation);
 
+        // FORCE ASPECT RATIO UPDATE FOR PROGRAM MODE
+        if (this.isProgram) {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            // Only update if size changed (performance check)
+            if (this.canvas.width !== w || this.canvas.height !== h) {
+                console.log(`Resizing Program Canvas: ${w}x${h}`);
+                this.renderer.setSize(w, h, false);
+                this.domeCamera.aspect = w / h;
+                this.domeCamera.updateProjectionMatrix();
+            }
+        }
+
         // 1. Render for Dome (using its own aspect ratio but mirrored view)
         this.renderer.render(this.scene, this.domeCamera);
 
