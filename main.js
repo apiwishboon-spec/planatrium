@@ -1082,6 +1082,10 @@ class Planetarium {
         else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
         else if (doc.mozRequestFullScreen) doc.mozRequestFullScreen();
         else if (doc.msRequestFullscreen) doc.msRequestFullscreen();
+
+        // Hide the button after entering fullscreen
+        const btn = document.getElementById('fullscreen-btn');
+        if (btn) btn.classList.add('hidden');
     }
 
     start(forcedStartTime = null) {

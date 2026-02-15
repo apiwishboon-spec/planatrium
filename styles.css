@@ -72,8 +72,19 @@ html.program-mode #main-canvas {
 
 /* Hide everything else definitively in program mode */
 html.program-mode #welcome-image-container,
-html.program-mode #fullscreen-btn,
 html.program-mode .monitor-label {
+    display: none !important;
+}
+
+html.program-mode #fullscreen-btn {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 2rem !important;
+    right: 2rem !important;
+    z-index: 9999 !important;
+}
+
+html.program-mode #fullscreen-btn.hidden {
     display: none !important;
 }
 
@@ -557,8 +568,14 @@ html {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all 0.3s ease;
+    transition: opacity 0.5s ease, transform 0.3s ease;
     pointer-events: auto;
+    opacity: 1;
+}
+
+#fullscreen-btn.hidden {
+    opacity: 0;
+    pointer-events: none;
 }
 
 #fullscreen-btn:hover {
@@ -593,7 +610,7 @@ html {
 }
 
 .welcome-overlay img {
-    max-width: 90%;
-    max-height: 90%;
-    object-fit: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
