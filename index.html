@@ -111,7 +111,21 @@
                 <!-- Dome Output (Projector) -->
                 <div class="monitor-frame program">
                     <span class="monitor-label">PROGRAM (DOME OUTPUT)</span>
-                    <canvas id="main-canvas"></canvas>
+                    <div class="dome-preview-container">
+                        <canvas id="main-canvas"></canvas>
+                        <!-- Circular Dome Mask -->
+                        <svg class="dome-mask" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <defs>
+                                <mask id="circleMask">
+                                    <rect width="100" height="100" fill="white" />
+                                    <circle cx="50" cy="50" r="48" fill="black" />
+                                </mask>
+                            </defs>
+                            <rect width="100" height="100" fill="black" mask="url(#circleMask)" />
+                            <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(138, 43, 226, 0.5)"
+                                stroke-width="0.5" />
+                        </svg>
+                    </div>
                 </div>
             </section>
 
