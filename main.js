@@ -449,6 +449,12 @@ class Planetarium {
         if (this.isProgram) {
             document.documentElement.classList.add('program-mode');
             this.sound.setVolume(0); // Only master plays audio
+
+            // Move welcome overlay to body to ensure it sits on top of the fixed canvas
+            const welcomeOverlay = document.getElementById('welcome-overlay');
+            if (welcomeOverlay) {
+                document.body.appendChild(welcomeOverlay);
+            }
         }
 
         this.channel.onmessage = (e) => {
