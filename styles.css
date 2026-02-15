@@ -629,3 +629,12 @@ html {
     height: 100%;
     object-fit: cover;
 }
+
+html.program-mode .welcome-overlay {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 5000 !important;
+}
